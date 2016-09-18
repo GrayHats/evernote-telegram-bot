@@ -40,7 +40,7 @@ class TelegramBot:
             # TODO: process inline result
             # TODO: process callback query
         except Exception as e:
-            self.logger.error(e, exc_info=1)
+            self.logger.error('Error: {0}, Data: {1}'.format(e, data), exc_info=1)
 
     async def handle_callback_query(self, query: CallbackQuery):
         pass
