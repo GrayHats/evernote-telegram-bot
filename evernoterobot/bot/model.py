@@ -129,6 +129,20 @@ class TelegramUpdate(Model):
         return self.request_type.lower() in ['photo', 'document', 'voice', 'video']
 
 
+class TelegramUpdateLog(Model):
+
+    save_fields = [
+        'created',
+        'update',
+        'headers',
+    ]
+
+    def __init__(self, update_data: dict, headers, **kwargs):
+        self.created = kwargs.get('created', datetime.datetime.now())
+        self.update = update_data
+        self.headers = headers
+
+
 class FailedUpdate(TelegramUpdate):
 
     save_fields = [
