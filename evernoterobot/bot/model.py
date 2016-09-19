@@ -89,6 +89,10 @@ class Model:
                 data[field] = val
         return data
 
+    @classmethod
+    def count(cls, query=None):
+        return len(cls.find(query))
+
 
 class StartSession(Model):
 
