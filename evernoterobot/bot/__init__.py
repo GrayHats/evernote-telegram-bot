@@ -191,16 +191,16 @@ class EvernoteBot(TelegramBot):
         user_id = message.user.id
         if '/start' in message.bot_commands:
             return
-        try:
+        if User.count({'id': user_id}) > 0:
             user = User.get({'id': user_id})
             if not hasattr(user, 'evernote_access_token') or not user.evernote_access_token:
                 await self.api.sendMessage(user.telegram_chat_id, 'You should authorize first. Please, send /start command.')
                 raise TelegramBotError('User {0} not authorized in Evernote'.format(user.id))
             user.last_request_time = datetime.datetime.now()
             user.save()
-        except ModelNotFound:
+        else:
             if StartSession.count({'id': user_id}) > 0:
-                message_text = 'Please, sign in to Evernote account first.'
+                message_text = 'Please, sign in to Evernote account first: /start'
                 error_text = 'User {0} not authorized in Evernote'.format(user_id)
             else:
                 message_text = 'Who are you, stranger? Please, send /start command.'
