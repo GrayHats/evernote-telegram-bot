@@ -8,16 +8,17 @@ from os.path import dirname, realpath, join
 import signal
 import time
 
-sys.path.insert(0, realpath(dirname(__file__)))
+root_dir = realpath(dirname(__file__))
+base_dir = join(root_dir, 'evernoterobot')
+sys.path.insert(0, base_dir)
 
 import gunicorn_config
 from daemons import EvernoteDealerDaemon, TelegramDownloaderDaemon
 import settings
 
 
-base_dir = realpath(dirname(__file__))
-dealer_pidfile = join(base_dir, 'dealer.pid')
-downloader_pidfile = join(base_dir, 'downloader.pid')
+dealer_pidfile = join(root_dir, 'dealer.pid')
+downloader_pidfile = join(root_dir, 'downloader.pid')
 gunicorn_pidfile = gunicorn_config.pidfile
 
 
