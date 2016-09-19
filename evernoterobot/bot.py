@@ -9,7 +9,7 @@ import signal
 import time
 
 root_dir = realpath(dirname(__file__))
-base_dir = join(root_dir, 'evernoterobot')
+base_dir = root_dir
 sys.path.insert(0, base_dir)
 
 import gunicorn_config
