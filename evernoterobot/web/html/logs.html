@@ -7,6 +7,7 @@
     <thead>
         <tr>
             <th>Created</th>
+            <th>User ID</th>
             <th>Update</th>
             <th>Headers</th>
         </tr>
@@ -16,6 +17,7 @@
     {% for entry in logs %}
         <tr>
             <td>{{ entry.created }}</td>
+            <td>{{ entry.message.from.id }}</td>
             <td>{{ entry.update }}</td>
             <td>{{ entry.headers }}</td>
         </tr>
