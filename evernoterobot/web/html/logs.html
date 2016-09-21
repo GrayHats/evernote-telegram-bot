@@ -8,6 +8,7 @@
         <tr>
             <th>Created</th>
             <th>User ID</th>
+            <th>User name</th>
             <th>Update</th>
             <th>Headers</th>
         </tr>
@@ -18,8 +19,13 @@
         <tr>
             <td>{{ entry.created }}</td>
             <td>{{ entry.update['message']['from']['id'] }}</td>
+            <td>{{ entry.update['message']['from']['first_name'] entry.update['message']['from']['last_name'] }}</td>
             <td>{{ entry.update }}</td>
-            <td>{{ entry.headers }}</td>
+            <td>
+                {% for header_name, value in entry.headers.items() %}
+                    <b>{{ header_name }}:</b> {{ value }}<br />
+                {% endfor %}
+            </td>
         </tr>
     {% endfor %}
     </tbody>
