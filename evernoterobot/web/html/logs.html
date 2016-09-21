@@ -19,7 +19,7 @@
         <tr>
             <td>{{ entry.created }}</td>
             <td>{{ entry.update['message']['from']['id'] }}</td>
-            <td>{{ entry.update['message']['from']['first_name'] entry.update['message']['from']['last_name'] }}</td>
+            <td>{{ entry.update['message']['from']['first_name'] }} {{ entry.update['message']['from']['last_name'] }}</td>
             <td>{{ entry.update }}</td>
             <td>
                 {% for header_name, value in entry.headers.items() %}
