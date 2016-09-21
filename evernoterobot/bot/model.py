@@ -141,9 +141,9 @@ class TelegramUpdateLog(Model):
         'headers',
     ]
 
-    def __init__(self, update_data: dict, headers, **kwargs):
+    def __init__(self, update: dict, headers, **kwargs):
         self.created = kwargs.get('created', datetime.datetime.now())
-        self.update = update_data
+        self.update = update
         self.headers = headers
 
 

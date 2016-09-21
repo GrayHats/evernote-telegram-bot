@@ -9,7 +9,7 @@ async def handle_update(request):
         data = await request.json()
         request.app.logger.info(request.path_qs)
         request.app.logger.info(str(data))
-        TelegramUpdateLog.create(update_data=data,
+        TelegramUpdateLog.create(update=data,
                                  headers=dict(request.headers))
         asyncio.ensure_future(request.app.bot.handle_update(data))
     except Exception as e:
