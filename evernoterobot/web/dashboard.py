@@ -3,7 +3,7 @@ import aiohttp_jinja2
 from bson import ObjectId
 
 from bot import DownloadTask
-from bot.model import FailedUpdate, TelegramUpdate, User
+from bot.model import FailedUpdate, TelegramUpdate, User, TelegramUpdateLog
 from settings import SECRET
 import hashlib
 
@@ -92,6 +92,33 @@ async def fix_failed_update(request):
 
 async def list_users(request):
     page = request.GET.get('page', 0)
-    limit = 50
-    users = [x for x in User.find({}, skip=page*limit, limit=limit)]
-    return aiohttp_jinja2.render_template('users.html', request, {'secret': SECRET['secret_key'], 'users': users})
+    page_size = 50
+    total_cnt = User.count()
+    num_pages = total_cnt / page_size + 1
+    users = [x for x in User.find({}, skip=page*page_size, limit=page_size)]
+    return aiohttp_jinja2.render_template(
+        'users.html',
+        request,
+        {
+            'secret': SECRET['secret_key'],
+            'users': users,
+            'num_pages': num_pages,
+        }
+    )
+
+
+async def view_telegram_update_logs(request):
+    page = request.GET.get('page', 0)
+    page_size = 50
+    total_cnt = TelegramUpdateLog.count()
+    num_pages = total_cnt / page_size + 1
+    logs = [x for x in TelegramUpdateLog.find({}, skip=page*page_size, limit=page_size, sort=[('created', -1)])]
+    return aiohttp_jinja2.render_template(
+        'logs.html',
+        request,
+        {
+            'secret': SECRET['secret_key'],
+            'logs': logs,
+            'num_pages': num_pages,
+        }
+    )
