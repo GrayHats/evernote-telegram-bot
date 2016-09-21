@@ -9,7 +9,7 @@ import signal
 import time
 
 root_dir = realpath(dirname(__file__))
-base_dir = root_dir
+base_dir = join(root_dir, 'evernoterobot')
 sys.path.insert(0, base_dir)
 
 import gunicorn_config
@@ -57,7 +57,9 @@ def start():
 
     if not os.path.exists(gunicorn_pidfile):
         print('Starting gunicorn...', end="")
-        os.system('gunicorn --config gunicorn_config.py %s' % gunicorn_config.app_name)
+        gunicorn_config_file = join(base_dir, 'gunicorn_config.py')
+        cmd = 'gunicorn --config {0} {1}'.format(gunicorn_config_file, gunicorn_config.app_name)
+        os.system(cmd)
         time.sleep(1)
         if check_process(gunicorn_pidfile):
             print(green('OK'))
@@ -79,9 +81,15 @@ def stop():
     TelegramDownloaderDaemon(downloader_pidfile).stop()
 
     print('Stopping gunicorn...', end="")
-    os.kill(get_pid(gunicorn_pidfile), signal.SIGTERM)
-    os.unlink(gunicorn_pidfile)
-    print(green('OK'))
+    try:
+        os.kill(get_pid(gunicorn_pidfile), signal.SIGTERM)
+        os.unlink(gunicorn_pidfile)
+        print(green('OK'))
+    except Exception:
+        if check_process(gunicorn_pidfile):
+            print(red('FAILED'))
+        else:
+            print(green('OK'))
 
 
 def status():
