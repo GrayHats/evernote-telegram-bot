@@ -17,7 +17,7 @@
     {% for entry in logs %}
         <tr>
             <td>{{ entry.created }}</td>
-            <td>{{ entry.message.from.id }}</td>
+            <td>{{ entry.update['message']['from']['id'] }}</td>
             <td>{{ entry.update }}</td>
             <td>{{ entry.headers }}</td>
         </tr>
