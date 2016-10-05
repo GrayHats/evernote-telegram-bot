@@ -47,6 +47,9 @@ app.router.add_route('GET', '/a/users/%s' % secret_key, list_users)
 app.router.add_route('GET', '/a/logs/%s' % secret_key, view_telegram_update_logs)
 app.router.add_route('POST', '/a/fix_failed_update/%s' % secret_key, fix_failed_update)
 
-app.loop.run_until_complete(bot.api.setWebhook(settings.TELEGRAM['webhook_url']))
+try:
+    app.loop.run_until_complete(bot.api.setWebhook(settings.TELEGRAM['webhook_url']))
+except Exception as e:
+    app.logger.error(e)
 
 app.bot = bot
