@@ -7,6 +7,8 @@ class TelegramUpdate:
         self.message = None
         if data.get('message'):
             self.message = Message(data['message'])
+        if data.get('edited_message'):
+            self.message = Message(data['edited_message'])
         self.callback_query = None
         if data.get('callback_query'):
             self.callback_query = CallbackQuery(data['callback_query'])
