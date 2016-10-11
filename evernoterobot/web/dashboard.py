@@ -95,7 +95,7 @@ async def list_users(request):
     page_size = 50
     total_cnt = User.count()
     num_pages = total_cnt / page_size + 1
-    users = [x for x in User.find({}, skip=page*page_size, limit=page_size)]
+    users = [x for x in User.find({}, skip=page*page_size, limit=page_size, sort=[('last_request_time', -1)])]
     return aiohttp_jinja2.render_template(
         'users.html',
         request,
