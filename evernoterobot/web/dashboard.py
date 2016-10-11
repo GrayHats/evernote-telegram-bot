@@ -113,6 +113,10 @@ async def view_telegram_update_logs(request):
     total_cnt = TelegramUpdateLog.count()
     num_pages = total_cnt / page_size + 1
     logs = [x for x in TelegramUpdateLog.find({}, skip=page*page_size, limit=page_size, sort=[('created', -1)])]
+    for entry in logs:
+        if not entry.update.get('message') and entry.update.get('edited_message'):
+            entry.update['message'] = entry.update['edited_message']
+            del entry.update['edited_message']
     return aiohttp_jinja2.render_template(
         'logs.html',
         request,
