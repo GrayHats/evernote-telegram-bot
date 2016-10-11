@@ -4,6 +4,7 @@ import argparse
 import logging.config
 import sys
 import os
+import asyncio
 from os.path import dirname, realpath, join
 import signal
 import time
@@ -15,6 +16,7 @@ sys.path.insert(0, base_dir)
 import gunicorn_config
 from daemons import EvernoteDealerDaemon, TelegramDownloaderDaemon
 import settings
+from ext.telegram.api import BotApi
 
 
 dealer_pidfile = join(root_dir, 'dealer.pid')
@@ -113,6 +115,14 @@ def reload():
     print(green('OK'))
 
 
+def set_webhook():
+    telegram_api = BotApi(settings.TELEGRAM['token'])
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(
+        telegram_api.setWebhook(settings.TELEGRAM['webhook_url'])
+    )
+
+
 def process_failed_updates():
     # TODO:
     pass
@@ -125,6 +135,7 @@ if __name__ == "__main__":
         'stop': stop,
         'reload': reload,
         'status': status,
+        'webhook': set_webhook,
         # 'fix-failed': process_failed_updates(),
     }
 
