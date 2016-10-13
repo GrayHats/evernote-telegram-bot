@@ -23,6 +23,7 @@ with open(join(PROJECT_DIR, secret_file)) as f:
 SMTP = SECRET['smtp']
 TELEGRAM = SECRET['telegram']
 EVERNOTE = SECRET['evernote']
+ADMINS = SECRET['admins']
 
 STORAGE = {
     'class': 'bot.storage.MongoStorage',
@@ -34,4 +35,8 @@ STORAGE = {
 MEMCACHED = {
     'host': '127.0.0.1',
     'port': 11211,
+}
+
+DASHBOARD = {
+    'root_url': '/a',
 }

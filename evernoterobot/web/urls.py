@@ -1,0 +1,1 @@
+dashboard_url = lambda url=None: '/a/{0}'.format(url or '')

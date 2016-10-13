@@ -7,6 +7,9 @@ from bot.model import FailedUpdate, TelegramUpdate, User, TelegramUpdateLog
 from settings import SECRET
 import hashlib
 
+from web import cookies
+from web.urls import dashboard_url
+
 
 def get_hash(s):
     m = hashlib.sha1()
@@ -24,7 +27,9 @@ async def login(request):
             password = get_hash(password)
             for user in admins:
                 if login == user['login'] and password == user['password']:
-                    return web.HTTPFound('/a/dashboard/{0}'.format(SECRET['secret_key']))
+                    response = web.HTTPFound(dashboard_url())
+                    response.set_cookie('dashboard', cookies.encode({'login': login})) # TODO: set expire_time
+                    return response
             return aiohttp_jinja2.render_template('login.html', request,
                                                   {'error': 'Invalid login or password'})
         return aiohttp_jinja2.render_template('login.html', request, {})

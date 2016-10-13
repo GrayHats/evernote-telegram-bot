@@ -15,6 +15,7 @@ import settings
 from bot import EvernoteBot
 from web.telegram import handle_update
 from web.evernote import oauth_callback, oauth_callback_full_access
+from web.urls import dashboard_url
 
 sys.path.insert(0, settings.PROJECT_DIR)
 
@@ -38,13 +39,13 @@ app.router.add_route('GET', '/evernote/oauth', oauth_callback)
 app.router.add_route('GET', '/evernote/oauth/full_access', oauth_callback_full_access)
 
 # dashboard
-app.router.add_route('GET', '/a', login)
-app.router.add_route('GET', '/a/dashboard/%s' % secret_key, dashboard)
-app.router.add_route('GET', '/a/downloads/%s' % secret_key, list_downloads)
-app.router.add_route('GET', '/a/failed_updates/%s' % secret_key, list_failed_updates)
-app.router.add_route('GET', '/a/queue/%s' % secret_key, list_updates)
-app.router.add_route('GET', '/a/users/%s' % secret_key, list_users)
-app.router.add_route('GET', '/a/logs/%s' % secret_key, view_telegram_update_logs)
-app.router.add_route('POST', '/a/fix_failed_update/%s' % secret_key, fix_failed_update)
+app.router.add_route('GET', dashboard_url(), login)
+app.router.add_route('GET', dashboard_url('/dashboard'), dashboard)
+app.router.add_route('GET', dashboard_url('/downloads'), list_downloads)
+app.router.add_route('GET', dashboard_url('/failed_updates'), list_failed_updates)
+app.router.add_route('GET', dashboard_url('/queue'), list_updates)
+app.router.add_route('GET', dashboard_url('/users'), list_users)
+app.router.add_route('GET', dashboard_url('/logs'), view_telegram_update_logs)
+app.router.add_route('POST', dashboard_url('/fix_failed_update'), fix_failed_update)
 
 app.bot = bot
