@@ -27,7 +27,7 @@ async def login(request):
             password = get_hash(password)
             for user in admins:
                 if login == user['login'] and password == user['password']:
-                    response = web.HTTPFound(dashboard_url())
+                    response = web.HTTPFound(dashboard_url('/dashboard'))
                     response.set_cookie('dashboard', cookies.encode({'login': login})) # TODO: set expire_time
                     return response
             return aiohttp_jinja2.render_template('login.html', request,
