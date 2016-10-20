@@ -5,10 +5,10 @@ from bson import ObjectId
 from bot import DownloadTask
 from bot.model import FailedUpdate, TelegramUpdate, User, TelegramUpdateLog
 from settings import SECRET
+from settings import DASHBOARD
 import hashlib
 
 from web import cookies
-from web.urls import dashboard_url
 
 
 def get_hash(s):
@@ -18,17 +18,20 @@ def get_hash(s):
 
 
 async def login(request):
+    if request.method == 'GET':
+        return aiohttp_jinja2.render_template('login.html', request, {})
     try:
-        login = request.GET.get('login')
-        password = request.GET.get('password')
+        await request.post()
+        login = request.POST.get('login')
+        password = request.POST.get('password')
         admins = SECRET['admins']
         if login and password:
             login = get_hash(login)
             password = get_hash(password)
             for user in admins:
                 if login == user['login'] and password == user['password']:
-                    response = web.HTTPFound(dashboard_url('/dashboard'))
-                    response.set_cookie('dashboard', cookies.encode({'login': login})) # TODO: set expire_time
+                    response = web.HTTPFound(DASHBOARD['root_url'])
+                    response.set_cookie('evernoterobot', cookies.encode({'login': login})) # TODO: set expire_time
                     return response
             return aiohttp_jinja2.render_template('login.html', request,
                                                   {'error': 'Invalid login or password'})

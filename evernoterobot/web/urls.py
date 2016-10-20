@@ -6,6 +6,7 @@ dashboard_url = lambda url=None: '{0}{1}'.format(settings.DASHBOARD['root_url'],
 
 dashboard_urls = [
     ('GET', dashboard_url(), login),
+    ('POST', dashboard_url(), login),
     ('GET', dashboard_url('/dashboard'), dashboard),
     ('GET', dashboard_url('/downloads'), list_downloads),
     ('GET', dashboard_url('/failed_updates'), list_failed_updates),
