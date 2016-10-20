@@ -4,8 +4,7 @@ from bson import ObjectId
 
 from bot import DownloadTask
 from bot.model import FailedUpdate, TelegramUpdate, User, TelegramUpdateLog
-from settings import SECRET
-from settings import DASHBOARD
+from settings import SECRET, DASHBOARD, ADMINS
 import hashlib
 
 from web import cookies
@@ -17,8 +16,20 @@ def get_hash(s):
     return m.hexdigest()
 
 
+def get_login(request):
+    if request.cookies and request.cookies['evernoterobot']:
+        data = cookies.decode(request.cookies['evernoterobot'])
+        username = data.get('login')
+        if filter(lambda x: x['login'] == username, ADMINS):
+            # TODO: check expire_time
+            # TODO: renew expire_time
+            return username
+
+
 async def login(request):
     if request.method == 'GET':
+        if get_login(request):
+            return web.HTTPFound('{0}{1}'.format(DASHBOARD['root_url'], '/dashboard'))
         return aiohttp_jinja2.render_template('login.html', request, {})
     try:
         await request.post()
@@ -40,6 +51,12 @@ async def login(request):
         request.app.logger.error(e, exc_info=1)
         return aiohttp_jinja2.render_template('login.html', request,
                                               { 'error': 'Access denied' })
+
+
+async def logout(request):
+    response = web.HTTPFound(DASHBOARD['root_url'])
+    response.del_cookie('evernoterobot')
+    return response
 
 
 async def dashboard(request):
