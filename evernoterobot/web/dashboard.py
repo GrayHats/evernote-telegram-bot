@@ -45,7 +45,6 @@ async def login(request):
 async def dashboard(request):
     return aiohttp_jinja2.render_template('dashboard.html', request,
                                           {
-                                              'secret': SECRET['secret_key'],
                                               'cnt_failed_updates': len(FailedUpdate.find()),
                                           })
 
@@ -55,7 +54,6 @@ async def list_downloads(request):
     response = aiohttp_jinja2.render_template('downloads.html',
                                               request,
                                               {
-                                                  'secret': SECRET['secret_key'],
                                                   'list_downloads': downloads
                                               })
     return response
@@ -66,7 +64,6 @@ async def list_failed_updates(request):
     response = aiohttp_jinja2.render_template('failed_updates.html',
                                               request,
                                               {
-                                                  'secret': SECRET['secret_key'],
                                                   'failed_updates': failed_updates
                                               })
     return response
@@ -77,7 +74,6 @@ async def list_updates(request):
     response = aiohttp_jinja2.render_template('queue.html',
                                               request,
                                               {
-                                                  'secret': SECRET['secret_key'],
                                                   'queue': updates,
                                               })
     return response
@@ -108,7 +104,6 @@ async def list_users(request):
         'users.html',
         request,
         {
-            'secret': SECRET['secret_key'],
             'users': users,
             'num_pages': num_pages,
         }
@@ -129,7 +124,6 @@ async def view_telegram_update_logs(request):
         'logs.html',
         request,
         {
-            'secret': SECRET['secret_key'],
             'logs': logs,
             'num_pages': num_pages,
         }
