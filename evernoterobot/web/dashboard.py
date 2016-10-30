@@ -153,7 +153,7 @@ async def view_telegram_update_logs(request):
             'from_id': dict_get(entry.update, 'message', 'from', 'id'),
             'first_name': dict_get(entry.update, 'message', 'from', 'first_name'),
             'last_name': dict_get(entry.update, 'message', 'from', 'last_name'),
-            'update': entry.update,
+            'data': str(entry.update),
             'headers': entry.headers,
         })
     return aiohttp_jinja2.render_template(
