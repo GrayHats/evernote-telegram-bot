@@ -33,6 +33,8 @@ class BaseHandler:
         title = update.request_type.capitalize()
         if text:
             title = ('%s...' % text[:15] if len(text) > 15 else text)
+        title = title.replace('\n', ' ')
+        title = title.replace('\r', ' ')
         note.title = "[BOT] {0}".format(title)
         note.notebookGuid = user.current_notebook['guid']
         content = NoteContent(note)
