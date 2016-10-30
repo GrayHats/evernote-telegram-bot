@@ -78,12 +78,12 @@ class NoteContent:
                     'md5': entry['hexdigest'],
                 }
             elif entry['type'] == 'string':
-                content_entry = '<br />{0}'.format(entry['value'])
+                content_entry = '<br /><pre>{0}</pre>'.format(entry['value'].replace('&', '&amp;'))
             new_content += content_entry
 
         return '<?xml version="1.0" encoding="UTF-8"?>' \
 '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">' \
-'<en-note>%(old_content)s<br /><pre>%(new_content)s</pre></en-note>' % {
+'<en-note>%(old_content)s<br />%(new_content)s</en-note>' % {
                 'old_content': self._old_content,
                 'new_content': new_content,
             }
