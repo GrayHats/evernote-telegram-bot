@@ -50,19 +50,19 @@ class TelegramBot:
 
         await self.on_message_received(message)
 
+        commands = [cmd.replace('/', '') for cmd in message.bot_commands or []]
+
         if hasattr(message, 'photos') and message.photos:
             await self.on_photo(message)
-        if hasattr(message, 'video') and message.video:
+        elif hasattr(message, 'video') and message.video:
             await self.on_video(message)
-        if hasattr(message, 'document') and message.document:
+        elif hasattr(message, 'document') and message.document:
             await self.on_document(message)
-        if hasattr(message, 'voice') and message.voice:
+        elif hasattr(message, 'voice') and message.voice:
             await self.on_voice(message)
-        if hasattr(message, 'location') and message.location:
+        elif hasattr(message, 'location') and message.location:
             await self.on_location(message)
-
-        commands = [cmd.replace('/', '') for cmd in message.bot_commands or []]
-        if commands:
+        elif commands:
             for cmd in commands:
                 await self.execute_command(cmd, message)
         else:
