@@ -137,7 +137,7 @@ class AsyncEvernoteApi:
         def create():
             note = Types.Note()
             note_title = title or ('%s...' % text[:25] if len(text) > 30 else text)
-            note_title = note_title.replace('\n', '\t')
+            note_title = note_title.replace('\n', ' ')
             note_title = note_title.replace('\r', ' ')
             note.title = note_title
             note.notebookGuid = notebook_guid
