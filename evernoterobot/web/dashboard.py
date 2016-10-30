@@ -127,16 +127,35 @@ async def list_users(request):
     )
 
 
+def dict_get(d: dict, *keys):
+    if not keys:
+        return d
+    value = d
+    for k in keys:
+        value = value.get(k)
+        if not value:
+            return
+    return value
+
+
 async def view_telegram_update_logs(request):
     page = request.GET.get('page', 0)
     page_size = 50
     total_cnt = TelegramUpdateLog.count()
     num_pages = total_cnt / page_size + 1
-    logs = [x for x in TelegramUpdateLog.find({}, skip=page*page_size, limit=page_size, sort=[('created', -1)])]
-    for entry in logs:
+    logs = []
+    for entry in TelegramUpdateLog.find({}, skip=page*page_size, limit=page_size, sort=[('created', -1)]):
         if not entry.update.get('message') and entry.update.get('edited_message'):
             entry.update['message'] = entry.update['edited_message']
             del entry.update['edited_message']
+        logs.append({
+            'created': entry.get('created'),
+            'from_id': dict_get(entry, 'message', 'from', 'id'),
+            'first_name': dict_get(entry, 'message', 'from', 'first_name'),
+            'last_name': dict_get(entry, 'message', 'from', 'last_name'),
+            'update': entry.get('update'),
+            'headers': entry.get('headers') or {},
+        })
     return aiohttp_jinja2.render_template(
         'logs.html',
         request,
