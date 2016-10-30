@@ -81,6 +81,7 @@ class FileHandler(BaseHandler):
         file_id = self.get_file_id(message)
         file_path, mime_type = await self.get_downloaded_file(file_id)
         content.add_file(file_path, mime_type)
+        content.add_text(message.text)
 
     def get_file_id(self, message: Message):
         pass
