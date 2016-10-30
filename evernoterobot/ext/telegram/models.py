@@ -77,7 +77,7 @@ class Message:
         self.user = TelegramUser(data['from'])
         self.caption = data.get('caption')
         self.chat = Chat(data['chat'])
-        self.text = data.get('text') or self.caption
+        self.text = data.get('text')
         self.bot_commands = self.__get_bot_commands(data.get('entities', []), self.text)
         if data.get('photo'):
             self.photos = [Photo(photo_data) for photo_data in data.get('photo')]
