@@ -8,6 +8,8 @@ async def session_middleware(app, handler):
     async def middleware_handler(request):
         if request.path == settings.DASHBOARD['root_url']:
             return await login(request)
+        if not request.path.startswith(settings.DASHBOARD['root_url']):
+            return await handler(request)
         if get_login(request):
             return await handler(request)
         return aioweb.HTTPFound(settings.DASHBOARD['root_url'])
