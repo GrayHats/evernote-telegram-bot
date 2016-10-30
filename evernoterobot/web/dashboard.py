@@ -148,6 +148,7 @@ async def view_telegram_update_logs(request):
         if not entry.update.get('message') and entry.update.get('edited_message'):
             entry.update['message'] = entry.update['edited_message']
             del entry.update['edited_message']
+        entry = entry.to_dict()
         logs.append({
             'created': entry.get('created'),
             'from_id': dict_get(entry, 'message', 'from', 'id'),

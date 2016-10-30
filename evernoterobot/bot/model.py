@@ -146,6 +146,13 @@ class TelegramUpdateLog(Model):
         self.update = update
         self.headers = headers
 
+    def to_dict(self):
+        return {
+            'created': self.created,
+            'update': self.update,
+            'headers': self.headers,
+        }
+
 
 class FailedUpdate(TelegramUpdate):
 
