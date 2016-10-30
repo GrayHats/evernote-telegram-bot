@@ -81,7 +81,6 @@ class Message:
         self.bot_commands = self.__get_bot_commands(data.get('entities', []), self.text)
         if data.get('photo'):
             self.photos = [Photo(photo_data) for photo_data in data.get('photo')]
-            self.text = data['photo'].get('caption', '')
         if data.get('video'):
             self.video = Video(data['video'])
         if data.get('document'):
