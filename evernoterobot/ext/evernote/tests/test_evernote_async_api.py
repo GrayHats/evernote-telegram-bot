@@ -1,6 +1,5 @@
 import pytest
 from ext.evernote.api import AsyncEvernoteApi
-from ext.evernote.client import EvernoteClient, NoteContent
 from settings import EVERNOTE
 
 
