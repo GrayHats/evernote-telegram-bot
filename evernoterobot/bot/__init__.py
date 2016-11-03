@@ -128,7 +128,6 @@ class EvernoteBot(TelegramBot):
                 reply = await self.api.sendMessage(user.telegram_chat_id, 'Please wait')
                 notebook_guid = user.current_notebook['guid']
                 note_guid = await self.evernote_api.new_note(user.evernote_access_token, notebook_guid, text='', title='Note for Evernoterobot')
-                # note_guid = self.evernote.create_note(user.evernote_access_token, text='', title='Note for Evernoterobot')
                 user.places[user.current_notebook['guid']] = note_guid
 
                 text = 'Bot switched to mode "{0}"'.format(text_mode)
