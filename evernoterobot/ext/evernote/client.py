@@ -78,7 +78,7 @@ class NoteContent:
                     'md5': entry['hexdigest'],
                 }
             elif entry['type'] == 'string':
-                content_entry = '<br /><pre><code>{0}</code></pre>'.format(entry['value'].replace('&', '&amp;'))
+                content_entry = '<br />{0}'.format(entry['value'].replace('&', '&amp;'))
             new_content += content_entry
 
         return '<?xml version="1.0" encoding="UTF-8"?>' \
