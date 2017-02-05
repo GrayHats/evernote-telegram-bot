@@ -25,11 +25,7 @@ bot = EvernoteBot(settings.TELEGRAM['token'], 'evernoterobot')
 app = aiohttp.web.Application(middlewares=[session_middleware])
 app.logger = logging.getLogger('bot')
 
-aiohttp_jinja2.setup(app,
-    loader=jinja2.FileSystemLoader(
-        join(dirname(__file__), 'html')
-    )
-)
+aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(join(dirname(__file__), 'html')))
 
 secret_key = settings.SECRET['secret_key']
 

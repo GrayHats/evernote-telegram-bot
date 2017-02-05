@@ -5,7 +5,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 import aiohttp
 
-import settings
 from bot import DownloadTask
 from ext.telegram.api import BotApi
 
@@ -21,10 +20,12 @@ class DownloadError(Exception):
         return self.__unicode__()
 
     def __unicode__(self):
-        return "{0} - Response: {1}, {2}".format(self.download_url, self.status, self.response)
+        return '{0} - Response: {1}, {2}'.format(
+            self.download_url, self.status, self.response)
 
     def __repr__(self):
-        return 'DownloadError({0}, "{1}", "{2}")'.format(self.status, self.response, self.download_url)
+        return 'DownloadError({0}, "{1}", "{2}")'.format(
+            self.status, self.response, self.download_url)
 
 
 class TelegramDownloader:
@@ -33,18 +34,18 @@ class TelegramDownloader:
     download file from Telegram servers to local directory.
     '''
 
-    def __init__(self, download_dir=None, *, loop=None):
+    def __init__(self, bot_token, download_dir=None, *, loop=None):
         self.logger = logging.getLogger('downloader')
-        self._telegram_api = BotApi(settings.TELEGRAM['token'])
+        self._telegram_api = BotApi(bot_token)
         self._loop = loop or asyncio.get_event_loop()
         self._executor = ThreadPoolExecutor(max_workers=10)
         self.tasks = []
         if download_dir is None:
             download_dir = '/tmp/'
             self.logger.warn('Download directory not specified. Uses "{0}"'.format(download_dir))
+        if not os.path.exists(download_dir):
+            raise FileNotFoundError('Directory "{0}" not found'.format(download_dir))
         self.download_dir = download_dir
-        if not os.path.exists(self.download_dir):
-            raise FileNotFoundError('Directory "{0}" not found'.format(self.download_dir))
 
     def run(self):
         self._loop.run_until_complete(self.async_run())

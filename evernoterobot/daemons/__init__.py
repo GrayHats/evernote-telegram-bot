@@ -1,6 +1,7 @@
 from bot.dealer import EvernoteDealer
 from bot.downloader import TelegramDownloader
 from daemons.daemon import Daemon
+from settings import TELEGRAM
 
 
 class EvernoteDealerDaemon(Daemon):
@@ -17,5 +18,5 @@ class TelegramDownloaderDaemon(Daemon):
         self.download_dir = download_dir
 
     def run(self):
-        downloader = TelegramDownloader(self.download_dir)
+        downloader = TelegramDownloader(TELEGRAM['token'], self.download_dir)
         downloader.run()

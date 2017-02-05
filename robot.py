@@ -95,7 +95,12 @@ def stop():
 
 
 def status():
-    for service_name, pidfile in [('Gunicorn', gunicorn_pidfile), ('Dealer', dealer_pidfile), ('Downloader', downloader_pidfile)]:
+    daemons = [
+        ('Gunicorn', gunicorn_pidfile),
+        ('Dealer', dealer_pidfile),
+        ('Downloader', downloader_pidfile)
+    ]
+    for service_name, pidfile in daemons:
         print("{0} status: ".format(service_name), end="")
         if check_process(pidfile):
             print(green('Started'))

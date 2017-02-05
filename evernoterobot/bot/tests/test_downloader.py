@@ -42,7 +42,7 @@ async def test_download_file():
 
     task = DownloadTask.create(file_id=get_file_id2(), completed=False)
     task2 = DownloadTask.create(file_id=get_file_id1(), completed=False)
-    downloader = TelegramDownloader(download_dir)
+    downloader = TelegramDownloader(settings.TELEGRAM['token'], download_dir)
 
     async def url(file_id):
         if file_id == 'robots':
