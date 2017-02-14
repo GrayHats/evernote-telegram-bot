@@ -11,11 +11,11 @@ from pymongo import MongoClient
 from bot import EvernoteBot
 from bot.model import Model
 
-sys.path.insert(0, realpath(dirname(__file__)))
+sys.path.insert(0, realpath(dirname(dirname(__file__))))
 
 import settings
 
-logging.config.dictConfig(settings.LOG_SETTINGS)
+# logging.config.dictConfig(settings.LOG_SETTINGS)
 
 
 def setup_test_loop():

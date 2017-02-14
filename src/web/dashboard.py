@@ -6,6 +6,7 @@ from bot import DownloadTask
 from bot.model import FailedUpdate, TelegramUpdate, User, TelegramUpdateLog
 from settings import SECRET, DASHBOARD, ADMINS
 import hashlib
+from utils.decorators import auth_required
 
 from web import cookies
 

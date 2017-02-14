@@ -24,7 +24,7 @@ class SslSMTPHandler(SMTPHandler):
                 port = smtplib.SMTP_PORT
             smtp = smtplib.SMTP_SSL(self.mailhost, port, timeout=1)
             msg = self.format(record)
-            subject = '[%s] %s' % (record.levelname, record.message)
+            # subject = '[%s] %s' % (record.levelname, record.message)
             msg = "From: %s\r\nTo: %s\r\nSubject: %s\r\nDate: %s\r\n\r\n%s" % (
                             self.fromaddr,
                             ",".join(self.toaddrs),
@@ -40,7 +40,6 @@ class SslSMTPHandler(SMTPHandler):
         except (KeyboardInterrupt, SystemExit):
             raise
         except Exception as e:
-            import traceback
             logger = logging.getLogger()
             logger.error(e, exc_info=1)
             # self.handleError(record)
@@ -135,6 +134,7 @@ LOG_SETTINGS = {
             'handlers': ['file', 'email'],
             'propagate': False,
         },
+        # APIs
         'evernote_api': {
             'level': 'ERROR',
             'handlers': ['file', 'evernote_api_file', 'stdout', 'email'],
@@ -145,6 +145,7 @@ LOG_SETTINGS = {
             'handlers': ['telegram_api_file', 'email'],
             'propagate': False,
         },
+        # daemons
         'dealer': {
             'level': 'ERROR',
             'handlers': ['dealer_file', 'stdout', 'email'],
@@ -155,6 +156,7 @@ LOG_SETTINGS = {
             'handlers': ['downloader_file', 'stdout', 'email'],
             'propagate': False,
         },
+        # bot
         'bot': {
             'level': 'WARNING',
             'handlers': ['file', 'email'],
