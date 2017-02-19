@@ -12,6 +12,7 @@ import jinja2
 sys.path.insert(0, realpath(dirname(dirname(__file__))))
 
 import settings
+from settings.logs import LOG_SETTINGS
 from bot import EvernoteBot
 
 
@@ -23,9 +24,9 @@ def get_module_info(module_name):
     }
     info = {}
     for key, special_name in specials.items():
-        file_path = '{0}/{1}/{2}.py'.format(base_dir, module_name, special_name)
-        if os.path.exists(file_path):
-            spec = spec_from_file_location(module_name, file_path)
+        path = '{0}/{1}/{2}.py'.format(base_dir, module_name, special_name)
+        if os.path.exists(path):
+            spec = spec_from_file_location(module_name, path)
             module = module_from_spec(spec)
             spec.loader.exec_module(module)
             info[special_name] = getattr(module, special_name)
@@ -37,7 +38,6 @@ modules = [
     'admin',
     'bot',
 ]
-
 loaded_modules = [get_module_info(m) for m in modules]
 
 middlewares = []
@@ -50,12 +50,12 @@ template_path_list = []
 for module_info in loaded_modules:
     if module_info.get('template_path'):
         template_path_list.append(module_info['template_path'])
-    if module_info.get('url_scheme'):
-        for url_scheme in module_info['url_scheme']:
+    if module_info.get('urls'):
+        for url_scheme in module_info['urls']:
             app.router.add_route(*url_scheme)
 
 aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(template_path_list))
-logging.config.dictConfig(settings.LOG_SETTINGS)
+logging.config.dictConfig(LOG_SETTINGS)
 app.logger = logging.getLogger('bot')
 bot = EvernoteBot(settings.TELEGRAM['token'], 'evernoterobot')
 app.bot = bot

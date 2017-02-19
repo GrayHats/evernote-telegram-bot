@@ -103,7 +103,7 @@ LOG_SETTINGS = {
         },
         'email': {
             'level': 'ERROR',
-            'class': 'settings.logging.SslSMTPHandler',
+            'class': 'settings.logs.SslSMTPHandler',
             'mailhost': (SMTP['host'], SMTP['port']),
             'fromaddr': SMTP['email'],
             'toaddrs': [SMTP['email']],
