@@ -30,7 +30,9 @@ def get_module_info(module_name):
             module = module_from_spec(spec)
             spec.loader.exec_module(module)
             info[special_name] = getattr(module, special_name)
-    info['template_path'] = '{0}/{1}/html'.format(base_dir, module_name)
+    template_dir = '{0}/{1}/html'.format(base_dir, module_name)
+    if os.path.exists(template_dir):
+        info['template_path'] = template_dir
     return info
 
 

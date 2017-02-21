@@ -1,5 +1,5 @@
 import asyncio
-from aiohttp import web
+from aiohttp.web import Response
 
 from bot.model import TelegramUpdateLog
 
@@ -9,10 +9,9 @@ async def handle_update(request):
         data = await request.json()
         request.app.logger.info(request.path_qs)
         request.app.logger.info(str(data))
-        TelegramUpdateLog.create(update=data,
-                                 headers=dict(request.headers))
+        TelegramUpdateLog.create(update=data, headers=dict(request.headers))
         asyncio.ensure_future(request.app.bot.handle_update(data))
     except Exception as e:
-        request.app.logger.fatal('Exception: {0}, Data: {1}'.format(e, data), exc_info=1)
-
-    return web.Response(body=b'ok')
+        message = 'Exception: {0}, Data: {1}'.format(e, data)
+        request.app.logger.fatal(message, exc_info=1)
+    return Response(body=b'ok')

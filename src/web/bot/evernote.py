@@ -10,6 +10,10 @@ import settings
 from bot.model import User, StartSession, ModelNotFound
 
 
+def send_message(bot, to_user, text):
+    asyncio.ensure_future(bot.api.sendMessage(to_user.telegram_chat_id, text))
+
+
 async def oauth_callback(request):
     logger = request.app.logger
     bot = request.app.bot
@@ -37,8 +41,9 @@ async def oauth_callback(request):
         return web.HTTPForbidden()
 
     if session.key != session_key:
-        text = "Session is expired. Please, send /start command to create new session"
-        asyncio.ensure_future(bot.api.sendMessage(user.telegram_chat_id, text))
+        text = "Session is expired. Please, send /start command to create \
+new session"
+        send_message(bot, user, text)
         return web.HTTPFound(bot.url)
 
     try:
@@ -52,25 +57,29 @@ async def oauth_callback(request):
                     params['oauth_verifier'][0]
                 )
             )
-            future.add_done_callback(functools.partial(set_access_token, bot, user))
-            text = 'Evernote account is connected.\nFrom now you can just send message and note be created.'
-            asyncio.ensure_future(bot.api.sendMessage(user.telegram_chat_id, text))
+            future.add_done_callback(
+                functools.partial(set_access_token, bot, user)
+            )
+            text = 'Evernote account is connected.\n\
+From now you can just send message and note be created.'
+            send_message(bot, user, text)
             user.save()
         else:
             # User decline access
             logger.info('User declined access. No access token =(')
             text = "We are sorry, but you declined authorization 😢"
-            asyncio.ensure_future(bot.api.sendMessage(user.telegram_chat_id, text))
-
+            send_message(bot, user, text)
     except TokenRequestDenied as e:
         logger.error(e, exc_info=1)
-        text = "We are sorry, but we have some problems with Evernote connection. Please try again later"
-        asyncio.ensure_future(bot.api.sendMessage(user.telegram_chat_id, text))
+        text = "We are sorry, but we have some problems with Evernote \
+connection. Please try again later"
+        send_message(bot, user, text)
     except Exception as e:
         logger.fatal(e, exc_info=1)
-        text = "Oops. Unknown error. Our best specialist already working to fix it"
+        text = "Oops. Unknown error. Our best specialist already working to \
+fix it"
         if user:
-            asyncio.ensure_future(bot.api.sendMessage(user.telegram_chat_id, text))
+            send_message(bot, user, text)
 
     return web.HTTPFound(bot.url)
 
@@ -79,7 +88,9 @@ def set_access_token(bot, user, future_access_token):
     access_token = future_access_token.result()
     user.evernote_access_token = access_token
     user.save()
-    future = asyncio.ensure_future(bot.evernote_api.get_default_notebook(access_token))
+    future = asyncio.ensure_future(
+        bot.evernote_api.get_default_notebook(access_token)
+    )
     future.add_done_callback(functools.partial(on_notebook_info, bot, user))
     asyncio.ensure_future(bot.update_notebooks_cache(user))
 
@@ -90,8 +101,10 @@ def on_notebook_info(bot, user, future_notebook):
         'guid': notebook.guid,
         'name': notebook.name,
     }
-    text = 'Current notebook: %s\nCurrent mode: %s' % (notebook.name, user.mode.replace('_', ' ').capitalize())
-    asyncio.ensure_future(bot.api.sendMessage(user.telegram_chat_id, text))
+    text = 'Current notebook: %s\nCurrent mode: %s' % (
+        notebook.name, user.mode.replace('_', ' ').capitalize()
+    )
+    send_message(bot, user, text)
     user.save()
 
 
@@ -111,8 +124,9 @@ async def oauth_callback_full_access(request):
         return web.HTTPForbidden()
 
     if session.key != session_key:
-        text = "Session is expired. Please, send /start command to create new session"
-        asyncio.ensure_future(bot.api.sendMessage(user.telegram_chat_id, text))
+        text = "Session is expired. Please, send /start command to create \
+new session"
+        send_message(bot, user, text)
         return web.HTTPFound(bot.url)
 
     try:
@@ -127,8 +141,11 @@ async def oauth_callback_full_access(request):
                     session.oauth_data['oauth_token_secret'],
                     oauth_verifier)
             )
-            future.add_done_callback(functools.partial(switch_to_one_note_mode, bot, user.id))
+            future.add_done_callback(
+                functools.partial(switch_to_one_note_mode, bot, user.id)
+            )
             text = 'From now this bot in "One note" mode'
+            send_message(bot, user, text)
             asyncio.ensure_future(bot.api.sendMessage(user.telegram_chat_id, text, hide_keyboard_markup))
         else:
             # User decline access
@@ -161,7 +178,9 @@ def switch_to_one_note_mode(bot, user_id, access_token_future):
                                   text='',
                                   title='Note for Evernoterobot')
     )
-    future.add_done_callback(functools.partial(save_default_note_guid, user_id))
+    future.add_done_callback(
+        functools.partial(save_default_note_guid, user_id)
+    )
 
 
 def save_default_note_guid(user_id, note_guid_future):
