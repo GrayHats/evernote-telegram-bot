@@ -42,9 +42,12 @@ class TelegramDownloader:
         self.tasks = []
         if download_dir is None:
             download_dir = '/tmp/'
-            self.logger.warn('Download directory not specified. Uses "{0}"'.format(download_dir))
+            self.logger.warn('Download directory not specified. \
+Uses "{0}"'.format(download_dir))
         if not os.path.exists(download_dir):
-            raise FileNotFoundError('Directory "{0}" not found'.format(download_dir))
+            raise FileNotFoundError(
+                'Directory "{0}" not found'.format(download_dir)
+            )
         self.download_dir = download_dir
 
     def run(self):
@@ -77,7 +80,11 @@ class TelegramDownloader:
             async with session.get(url) as response:
                 if response.status == 200:
                     data = await response.read()
-                    await self._loop.run_in_executor(self._executor, self.write_file, destination_file, data)
+                    await self._loop.run_in_executor(
+                        self._executor,
+                        self.write_file,
+                        destination_file, data
+                    )
                     return response
                 else:
                     response_text = await response.text()
@@ -89,7 +96,10 @@ class TelegramDownloader:
             download_url = await self.get_download_url(file_id)
             destination_file = os.path.join(self.download_dir, file_id)
             response = await self.download_file(download_url, destination_file)
-            task.mime_type = response.headers.get('CONTENT-TYPE', 'application/octet-stream')
+            task.mime_type = response.headers.get(
+                'CONTENT-TYPE',
+                'application/octet-stream'
+            )
             task.completed = True
             task.file = destination_file
             task.save()
@@ -100,11 +110,15 @@ class TelegramDownloader:
 
     def download_all(self):
         futures = []
-        tasks = DownloadTask.find({'in_progress': {'$exists': False}, 'completed': False})
+        tasks = DownloadTask.find(
+            {'in_progress': {'$exists': False}, 'completed': False}
+        )
         for task in tasks:
             entry = task.update(
                 {'in_progress': {'$exists': False}},
                 {'in_progress': True}
             )
-            futures.append(asyncio.ensure_future(self.handle_download_task(entry)))
+            futures.append(
+                asyncio.ensure_future(self.handle_download_task(entry))
+            )
         return futures

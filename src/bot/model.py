@@ -1,8 +1,6 @@
 import datetime
 import importlib
 import inspect
-import random
-import string
 
 import settings
 
@@ -61,7 +59,8 @@ class Model:
     def find(cls, query: dict=None, sort=None, skip=None, limit=None):
         query = query or {}
         sort = sort or []
-        return [cls(**doc) for doc in cls.__get_storage().find(query, sort, skip, limit)]
+        entries = cls.__get_storage().find(query, sort, skip, limit)
+        return [cls(**doc) for doc in entries]
 
     def save(self):
         self.__get_storage().save(self)
@@ -122,7 +121,8 @@ class TelegramUpdate(Model):
         'message',
     ]
 
-    def __init__(self, user_id, request_type, status_message_id, message: dict, **kwargs):
+    def __init__(self, user_id, request_type, status_message_id,
+                 message, **kwargs):
         self.id = kwargs.get('id')
         self.user_id = user_id
         self.request_type = request_type
@@ -131,7 +131,9 @@ class TelegramUpdate(Model):
         self.created = kwargs.get('created', datetime.datetime.now())
 
     def has_file(self):
-        return self.request_type.lower() in ['photo', 'document', 'voice', 'video']
+        return self.request_type.lower() in [
+            'photo', 'document', 'voice', 'video'
+        ]
 
 
 class TelegramUpdateLog(Model):
@@ -159,7 +161,8 @@ class FailedUpdate(TelegramUpdate):
         'error',
     ]
 
-    def __init__(self, user_id, request_type, status_message_id, message, **kwargs):
+    def __init__(self, user_id, request_type, status_message_id,
+                 message, **kwargs):
         self.id = kwargs.get('id')
         self.user_id = user_id
         self.request_type = request_type
@@ -214,7 +217,8 @@ class User(Model):
         self.name = kwargs.get('name')
         self.username = kwargs.get('username')
         self.created = kwargs.get('created', datetime.datetime.now())
-        self.last_request_time = kwargs.get('last_request_time', datetime.datetime.now())
+        self.last_request_time = kwargs.get('last_request_time',
+                                            datetime.datetime.now())
         self.telegram_chat_id = kwargs['telegram_chat_id']
         self.state = kwargs.get('state')
         self.mode = kwargs.get('mode')

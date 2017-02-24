@@ -89,7 +89,10 @@ class MemoryStorage(Storage):
         for k, obj in self._items.get(self.collection, {}).items():
             if self._check_query(obj, query):
                 objects.append(obj)
-        objects = sorted(objects, key=lambda x: [x[k] for k, direction in sort])
+        objects = sorted(
+            objects,
+            key=lambda x: [x[k] for k, direction in sort]
+        )
         if skip is not None:
             objects = objects[skip:]
         if limit is not None:
@@ -179,7 +182,9 @@ class MongoStorage(Storage):
 
     def update(self, query: dict, new_values: dict):
         collection = self.__get_collection()
-        document = collection.find_and_modify(self.__prepare_query(query), {'$set': new_values})
+        document = collection.find_and_modify(
+            self.__prepare_query(query), {'$set': new_values}
+        )
         document['id'] = document['_id']
         del document['_id']
         return document

@@ -41,17 +41,27 @@ class BaseHandler:
         await self.update_content(content, message)
         note.resources = content.get_resources()
         note.content = str(content)
-        return await self._note_provider.save_note(user.evernote_access_token, note)
+        return await self._note_provider.save_note(
+            user.evernote_access_token, note
+        )
 
     async def _update_note(self, user: User, update: TelegramUpdate):
         notebook_guid = user.current_notebook['guid']
         note_guid = user.places.get(notebook_guid)
         if not note_guid:
-            raise Exception('There are no default note in notebook {0}'.format(user.current_notebook['name']))
+            raise Exception(
+                'There are no default note in notebook {0}'.format(
+                    user.current_notebook['name']
+                )
+            )
         try:
-            note = await self._note_provider.get_note(user.evernote_access_token, note_guid)
+            note = await self._note_provider.get_note(
+                user.evernote_access_token, note_guid
+            )
         except NoteNotFound:
-            self.logger.warning("Note {0} not found. Creating new note".format(note_guid))
+            self.logger.warning(
+                'Note {0} not found. Creating new note'.format(note_guid)
+            )
             note = await self._create_note(user, update)
             user.places[notebook_guid] = note.guid
             user.save()
@@ -59,8 +69,14 @@ class BaseHandler:
         content = NoteContent(note)
         if update.has_file():
             new_note = await self._create_note(user, update)
-            note_link = await self._note_provider.get_note_link(user.evernote_access_token, new_note)
-            content.add_text('{0}: <a href="{1}">{1}</a>'.format(update.request_type.capitalize(), note_link))
+            note_link = await self._note_provider.get_note_link(
+                user.evernote_access_token, new_note
+            )
+            content.add_text(
+                '{0}: <a href="{1}">{1}</a>'.format(
+                    update.request_type.capitalize(), note_link
+                )
+            )
         else:
             message = Message(update.message)
             await self.update_content(content, message)
@@ -105,7 +121,10 @@ class FileHandler(BaseHandler):
                 os.unlink(wav_file)
             task.delete()
         except Exception as e:
-            self.logger.fatal('{0} cleanup failed: {1}'.format(self.__class__.__name__, e), exc_info=1)
+            self.logger.fatal(
+                '{0} cleanup failed: {1}'.format(self.__class__.__name__, e),
+                exc_info=1
+            )
         await super().cleanup(user, update)
 
 
@@ -147,7 +166,9 @@ class VoiceHandler(FileHandler):
             # convert to wav
             os.system('opusdec %s %s' % (ogg_file_path, wav_filename))
         except Exception:
-            self.logger.error("Can't convert ogg to wav, %s" % traceback.format_exc())
+            self.logger.error(
+                "Can't convert ogg to wav, %s" % traceback.format_exc()
+            )
             wav_filename = ogg_file_path
             mime_type = 'audio/ogg'
 
