@@ -42,14 +42,13 @@ class TelegramBot:
             # TODO: process inline result
             # TODO: process callback query
         except Exception as e:
-            self.logger.error('Error: {0}\nData: {1}\n\n'.format(e, data), exc_info=1)
+            message = 'Error: {0}\nData: {1}\n\n'.format(e, data)
+            self.logger.error(message, exc_info=1)
 
     async def handle_callback_query(self, query: CallbackQuery):
         pass
 
     async def handle_message(self, message: Message):
-        user = message.user
-
         await self.on_message_received(message)
 
         commands = [cmd.replace('/', '') for cmd in message.bot_commands or []]

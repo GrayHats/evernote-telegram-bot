@@ -12,7 +12,8 @@ async def track(uid, message, name='Message', loop=None):
     headers = {'Content-type': 'application/json'}
     try:
         with aiohttp.ClientSession(loop=loop) as session:
-            async with session.post(TRACK_URL, params=params, data=data, headers=headers) as resp:
+            async with session.post(TRACK_URL, params=params, data=data,
+                                    headers=headers) as resp:
                 return await resp.json()
     except (aiohttp.errors.ClientError, ValueError) as e:
         print(e)

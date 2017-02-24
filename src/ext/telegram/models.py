@@ -13,10 +13,12 @@ class TelegramUpdate:
         if data.get('callback_query'):
             self.callback_query = CallbackQuery(data['callback_query'])
 
+
 class Chat:
     def __init__(self, data: dict):
         self.id = data['id']
         self.type = data['type']
+
 
 class TelegramUser:
     def __init__(self, data: dict):
@@ -25,11 +27,13 @@ class TelegramUser:
         self.first_name = data.get('first_name', '')
         self.username = data.get('username', '')
 
+
 class File:
     def __init__(self, data: dict):
         self.file_size = data['file_size']
         self.file_id = data['file_id']
         self.mime_type = data.get('mime_type')
+
 
 class Photo(File):
     def __init__(self, data: dict):
@@ -37,24 +41,29 @@ class Photo(File):
         self.width = data['width']
         self.height = data['height']
 
+
 class Video(File):
     def __init__(self, data: dict):
         super().__init__(data)
+
 
 class Document(File):
     def __init__(self, data: dict):
         super().__init__(data)
         self.file_name = data['file_name']
 
+
 class Voice(File):
     def __init__(self, data: dict):
         super().__init__(data)
         self.duration = data['duration']
 
+
 class Location:
     def __init__(self, data: dict):
         self.latitude = data['latitude']
         self.longitude = data['longitude']
+
 
 class Venue:
     def __init__(self, data: dict):
@@ -63,11 +72,13 @@ class Venue:
         self.title = data.get('title')
         self.location = Location(data['location'])
 
+
 class Entity:
     def __init__(self, data: dict):
         self.type = data['type']
         self.length = data.get('length')
         self.offset = data.get('offset')
+
 
 class Message:
     def __init__(self, data: dict):
@@ -78,9 +89,12 @@ class Message:
         self.caption = data.get('caption')
         self.chat = Chat(data['chat'])
         self.text = data.get('text') or self.caption
-        self.bot_commands = self.__get_bot_commands(data.get('entities', []), self.text)
+        self.bot_commands = self.__get_bot_commands(data.get('entities', []),
+                                                    self.text)
         if data.get('photo'):
-            self.photos = [Photo(photo_data) for photo_data in data.get('photo')]
+            self.photos = [
+                Photo(photo_data) for photo_data in data.get('photo')
+            ]
         if data.get('video'):
             self.video = Video(data['video'])
         if data.get('document'):
