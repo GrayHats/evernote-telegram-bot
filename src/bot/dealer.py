@@ -2,7 +2,6 @@ import asyncio
 import logging
 import time
 import traceback
-from typing import List
 
 import settings
 from bot import EvernoteBot
@@ -47,12 +46,15 @@ class EvernoteDealer:
                 for user_id, updates in updates_by_user.items():
                     try:
                         user = User.get({'id': user_id})
-                        asyncio.ensure_future(self.process_user_updates(user, updates))
+                        asyncio.ensure_future(
+                            self.process_user_updates(user, updates)
+                        )
                     except Exception as e:
-                        self.logger.error("Can't process updates for user {0}\n{1}".format(user_id, e), exc_info=1)
+                        message = "Can't process updates for user \
+{0}\n{1}".format(user_id, e)
+                        self.logger.error(message, exc_info=1)
         except Exception:
             self.logger.fatal('Dealer DOWN!!!', exc_info=1)
-
 
     def fetch_updates(self):
         self.logger.debug('Fetching telegram updates...')
@@ -77,7 +79,7 @@ class EvernoteDealer:
             self.logger.error(err, exc_info=1)
         return updates_by_user
 
-    async def process_user_updates(self, user, update_list: List[TelegramUpdate]):
+    async def process_user_updates(self, user, update_list):
         start_ts = time.time()
         self.logger.debug('Start update list processing (user_id = {0})'.format(user.id))
         for update in update_list:

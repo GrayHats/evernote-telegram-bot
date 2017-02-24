@@ -204,4 +204,3 @@ class AsyncEvernoteApi:
             return note_store.listNotebooks()
 
         return await self.loop.run_in_executor(self.executor, _list_notebooks)
-

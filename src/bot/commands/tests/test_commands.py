@@ -11,7 +11,7 @@ from bot.commands.start import StartCommand
 from bot.commands.switch_mode import SwitchModeCommand
 from bot.model import StartSession
 from ext.telegram.models import TelegramUpdate
-from ext.telegram.conftest import text_update
+# from ext.telegram.conftest import text_update
 
 
 @pytest.mark.async_test

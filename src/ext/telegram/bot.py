@@ -80,11 +80,11 @@ class TelegramBot:
         obj = CommandClass(self)
         await obj.execute(message)
 
-    def send_message(self, chat_id, text, inline_keyboard=None):
-        if inline_keyboard:
-            inline_keyboard = json.dumps(inline_keyboard)
+    def send_message(self, chat_id, text, reply_markup=None):
+        if reply_markup:
+            reply_markup = json.dumps(reply_markup)
         return asyncio.ensure_future(
-            self.api.sendMessage(chat_id, text, inline_keyboard)
+            self.api.sendMessage(chat_id, text, reply_markup)
         )
 
     async def on_before_handle_update(self, update: TelegramUpdate):
