@@ -24,4 +24,3 @@ def dict_set(dict_obj: dict, value, path: List[str]):
         else:
             pointer[step] = value
     return dict_obj
-

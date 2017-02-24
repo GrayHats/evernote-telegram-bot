@@ -1,7 +1,8 @@
 import datetime
 import importlib
 import inspect
-import uuid
+import random
+import string
 
 import settings
 

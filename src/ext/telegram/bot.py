@@ -1,4 +1,6 @@
+import asyncio
 import logging
+import json
 from abc import abstractmethod
 
 from ext.telegram.api import BotApi
@@ -78,6 +80,13 @@ class TelegramBot:
             raise TelegramBotError('Command "%s" not found' % cmd_name)
         obj = CommandClass(self)
         await obj.execute(message)
+
+    def send_message(self, chat_id, text, inline_keyboard=None):
+        if inline_keyboard:
+            inline_keyboard = json.dumps(inline_keyboard)
+        return asyncio.ensure_future(
+            self.api.sendMessage(chat_id, text, inline_keyboard)
+        )
 
     async def on_before_handle_update(self, update: TelegramUpdate):
         pass
