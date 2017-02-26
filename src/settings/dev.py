@@ -1,6 +1,7 @@
 from .base import *
 
-DEBUG = True
+TELEGRAM = SECRET['telegram']['dev']
+EVERNOTE = SECRET['evernote']['dev']
 
 STORAGE = {
     'class': 'bot.storage.MemoryStorage',

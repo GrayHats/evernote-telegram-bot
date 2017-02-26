@@ -16,7 +16,7 @@ class BotApi:
         self.logger = logging.getLogger('telegram_api')
 
     async def __request(self, method_name, **kwargs):
-        url = "https://api.telegram.org/bot%(token)s/%(method_name)s" % {
+        url = 'https://api.telegram.org/bot%(token)s/%(method_name)s' % {
             'token': self.token,
             'method_name': method_name,
         }
@@ -26,14 +26,14 @@ class BotApi:
                 args_data.update({k: v})
         with aiohttp.ClientSession() as session:
             self.logger.debug(
-                "API request %(http_method)s %(url)s, data: %(data)s" % {
+                'API request %(http_method)s %(url)s, data: %(data)s' % {
                     'http_method': 'POST',
                     'url': url,
                     'data': str(args_data),
                 })
             async with session.post(url, data=args_data) as response:
                 data = await response.json()
-                self.logger.debug("API response: %s" % str(data))
+                self.logger.debug('API response: %s' % str(data))
 
         if not data['ok']:
             raise BotApiError(data['error_code'], data['description'])

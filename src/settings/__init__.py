@@ -1,6 +1,6 @@
 import socket
 
 if socket.gethostname() in ['hamster']:
-    from .base import *
+    from .live import *
 else:
     from .dev import *

@@ -3,7 +3,7 @@ from os.path import dirname, join, realpath
 import json
 
 
-DEBUG = False
+DEBUG = True
 
 PROJECT_NAME = 'evernoterobot'
 # TODO: переименовать в PROJECT_ROOT
@@ -22,8 +22,6 @@ with open(join(PROJECT_DIR, secret_file)) as f:
     SECRET = json.load(f)
 
 SMTP = SECRET['smtp']
-TELEGRAM = SECRET['telegram']
-EVERNOTE = SECRET['evernote']
 ADMINS = SECRET['admins']
 
 STORAGE = {
