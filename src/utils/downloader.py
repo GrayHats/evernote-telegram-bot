@@ -33,10 +33,10 @@ class HttpDownloader:
         self._executor = ThreadPoolExecutor(max_workers=10)
         if download_dir is None:
             download_dir = '/tmp'
-            message = 'download_dir does not set. Used: "{0}"'.format(download_dir)
+            message = 'download_dir does not set. Used: "%s"' % download_dir
             self.logger.warn(message)
         if not os.path.exists(download_dir):
-            message = 'Download directory {0} not found'.format(download_dir)
+            message = 'Download directory %s not found' % download_dir
             raise FileNotFoundError(message)
         self.download_dir = download_dir
 
@@ -60,7 +60,9 @@ class HttpDownloader:
                         dest_file,
                         data
                     )
-                    self.logger.debug('File saved to {0} ({1})'.format(dest_file, url))
+                    self.logger.debug(
+                        'File saved to {0} ({1})'.format(dest_file, url)
+                    )
                     return response
                 else:
                     response_text = await response.text()
