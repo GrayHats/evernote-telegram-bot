@@ -8,5 +8,6 @@ MarkupSafe==0.23
 multidict==1.2.2
 oauthlib==2.0.0
 pymongo==3.3.0
+PyYAML==3.12
 requests==2.11.1
 requests-oauthlib==0.6.2

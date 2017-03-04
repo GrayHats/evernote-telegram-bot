@@ -4,7 +4,6 @@ import time
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
-import settings
 from ext.evernote.client import NoteContent, Types, ErrorTypes, EvernoteSdk
 
 
@@ -53,10 +52,10 @@ def edam_user_exception(func):
 
 class AsyncEvernoteApi:
 
-    def __init__(self, loop=None):
+    def __init__(self, loop=None, sandbox=False):
         self.loop = loop or asyncio.get_event_loop()
         self.executor = ThreadPoolExecutor(max_workers=10)
-        self.sandbox = settings.DEBUG
+        self.sandbox = sandbox
         self.logger = logging.getLogger('evernote_api')
 
     def __call_store_method(self, method_name, auth_token, *args, **kwargs):

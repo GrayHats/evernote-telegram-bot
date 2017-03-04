@@ -9,8 +9,7 @@ from bot.model import FailedUpdate
 from bot.model import TelegramUpdate
 from bot.model import User
 from bot.model import TelegramUpdateLog
-from settings import SECRET
-from settings import ADMINS
+from config import config
 from web import cookies
 
 
@@ -28,7 +27,7 @@ def get_login(request):
     if request.cookies and request.cookies['evernoterobot']:
         data = cookies.decode(request.cookies['evernoterobot'])
         username = data.get('login')
-        if filter(lambda x: x['login'] == username, ADMINS):
+        if filter(lambda x: x['login'] == username, config['admins']):
             now = time.time()
             if data.get('expire_time', now) >= now:
                 return username
@@ -45,7 +44,7 @@ async def login(request):
         await request.post()
         login = request.POST.get('login')
         password = request.POST.get('password')
-        admins = SECRET['admins']
+        admins = config['admins']
         if login and password:
             login = get_hash(login)
             password = get_hash(password)

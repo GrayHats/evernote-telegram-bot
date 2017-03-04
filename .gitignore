@@ -2,7 +2,8 @@
 __pycache__
 .cache
 *.sublime*
-src/settings/secret.json
+src/config/dev.yaml
+src/config/live.yaml
 *.log
 *.pid
 *.bak

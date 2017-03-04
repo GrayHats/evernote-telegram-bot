@@ -2,7 +2,7 @@ import datetime
 import importlib
 import inspect
 
-import settings
+from config import config
 
 
 class ModelNotFound(Exception):
@@ -30,7 +30,7 @@ class Model:
         collection = cls.__name__.lower()
         if cls.storage and cls.storage.collection == collection:
             return cls.storage
-        storage_info = settings.STORAGE
+        storage_info = config['storage']
         path = storage_info['class'].split('.')
         classname = str(path[-1:][0])
         module_name = ".".join(path[:-1])

@@ -1,0 +1,37 @@
+debug: true
+project_name: evernoterobot
+# secret_key: secret_key
+# botan_token: token
+
+gunicorn:
+    port: 9000
+
+storage:
+    class: bot.storage.MemoryStorage
+    # class: bot.storage.MongoStorage
+    # db: dbname
+    # host: hostname
+    # port: 27017
+
+# admins:
+#     - name: username
+#       login: login
+#       password: password
+
+# smtp:
+#     host: smtp.hostname
+#     port: 465
+#     user: username
+#     password: password
+#     email: email@hostname
+
+# evernote:
+#     access_token: token
+#     basic_access:
+#         key: key
+#         secret: secret
+#         oauth_callback: url
+
+# telegram:
+#     token: token
+#     webhook_url: url

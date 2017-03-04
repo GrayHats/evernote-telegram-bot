@@ -129,9 +129,11 @@ class MongoStorage(Storage):
 
     def __get_collection(self) -> Collection:
         if not hasattr(self, '__collection'):
-            uri = 'mongodb://{0}:{1}/{2}'.format(self.config['host'],
-                                                 self.config['port'],
-                                                 self.config['db'])
+            uri = 'mongodb://{0}:{1}/{2}'.format(
+                self.config.get('host', 'localhost'),
+                self.config.get('port', 27017),
+                self.config['db']
+            )
             client = MongoClient(uri)
             self.__collection = client.get_default_database()[self.collection]
         return self.__collection

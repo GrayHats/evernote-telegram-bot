@@ -4,7 +4,6 @@ import asyncio
 import random
 import string
 
-import settings
 from bot.model import StartSession
 from ext.telegram.bot import TelegramBotCommand
 from ext.telegram.models import Message
@@ -18,7 +17,7 @@ class StartCommand(TelegramBotCommand):
         chat_id = message.chat.id
         user_id = message.user.id
         self.bot.track(message)
-        config = settings.EVERNOTE['basic_access']
+        config = self.bot.config['evernote']['basic_access']
         session_key = ''.join(
             [random.choice(string.ascii_letters + string.digits)
              for i in range(32)]

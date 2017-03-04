@@ -9,7 +9,7 @@ from os.path import realpath, dirname, join, basename
 import aiomcache
 import asyncio
 
-import settings
+from config import config
 from bot.model import User, TelegramUpdate, DownloadTask, StartSession
 from ext.botan_async import track
 from ext.evernote.api import AsyncEvernoteApi
@@ -50,12 +50,12 @@ class EvernoteBot(TelegramBot):
 
     def __init__(self, token, name):
         super(EvernoteBot, self).__init__(token, name)
-        config = settings.EVERNOTE['basic_access']
+        config_data = config['evernote']['basic_access']
         self.evernote = EvernoteClient(
-            config['key'],
-            config['secret'],
-            config['oauth_callback'],
-            sandbox=settings.DEBUG
+            config_data['key'],
+            config_data['secret'],
+            config_data['oauth_callback'],
+            sandbox=config['debug']
         )
         self.evernote_api = AsyncEvernoteApi()
         self.cache = aiomcache.Client('127.0.0.1', 11211)
@@ -176,13 +176,13 @@ read and update your notes'
                                          text,
                                          json.dumps(inline_keyboard))
                 )
-                config = settings.EVERNOTE['full_access']
+                config_data = config['evernote']['full_access']
                 session = StartSession.get({'id': user.id})
                 oauth_data = await self.evernote_api.get_oauth_data(
                     user.id,
-                    config['key'],
-                    config['secret'],
-                    config['oauth_callback'],
+                    config_data['key'],
+                    config_data['secret'],
+                    config_data['oauth_callback'],
                     session.key
                 )
                 session.oauth_data = oauth_data

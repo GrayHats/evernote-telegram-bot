@@ -5,14 +5,14 @@ import asyncio
 from aiohttp import web
 from requests_oauthlib.oauth1_session import TokenRequestDenied
 
-import settings
+from config import config
 from bot.model import User, StartSession, ModelNotFound
 
 
 async def oauth_callback(request):
     logger = request.app.logger
     bot = request.app.bot
-    config = settings.EVERNOTE['basic_access']
+    config_data = config['evernote']['basic_access']
     params = parse_qs(request.query_string)
     callback_key = params.get('key', [''])[0]
     session_key = params.get('session_key')[0]
@@ -45,8 +45,8 @@ Please, send /start command to create new session'
     try:
         future = asyncio.ensure_future(
             bot.evernote_api.get_access_token(
-                config['key'],
-                config['secret'],
+                config_data['key'],
+                config_data['secret'],
                 session.oauth_data['oauth_token'],
                 session.oauth_data['oauth_token_secret'],
                 params['oauth_verifier'][0]
@@ -123,11 +123,11 @@ new session'
         return web.HTTPFound(bot.url)
     try:
         oauth_verifier = params['oauth_verifier'][0]
-        config = settings.EVERNOTE['full_access']
+        config_data = config['evernote']['full_access']
         future = asyncio.ensure_future(
             bot.evernote_api.get_access_token(
-                config['key'],
-                config['secret'],
+                config_data['key'],
+                config_data['secret'],
                 session.oauth_data['oauth_token'],
                 session.oauth_data['oauth_token_secret'],
                 oauth_verifier)

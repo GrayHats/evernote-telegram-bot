@@ -1,19 +1,16 @@
-import sys
 import logging.config
 import os
-from os.path import realpath, dirname
-from importlib.util import spec_from_file_location, module_from_spec
-
+from os.path import realpath
+from os.path import dirname
+from importlib.util import spec_from_file_location
+from importlib.util import module_from_spec
 import aiohttp.web
 import aiohttp_jinja2
 import jinja2
-
-
-sys.path.insert(0, realpath(dirname(dirname(__file__))))
-
-import settings
-from settings.logs import LOG_SETTINGS
 from bot import EvernoteBot
+
+from src.utils.logs import get_config
+from config import config
 
 
 def get_module_info(module_name):
@@ -57,7 +54,9 @@ for module_info in loaded_modules:
             app.router.add_route(*url_scheme)
 
 aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(template_path_list))
-logging.config.dictConfig(LOG_SETTINGS)
+log_config = get_config(config['project_name'], config['logs_dir'], config['smtp'])
+logging.config.dictConfig(log_config)
 app.logger = logging.getLogger('bot')
-bot = EvernoteBot(settings.TELEGRAM['token'], 'evernoterobot')
+bot = EvernoteBot(config['telegram']['token'], 'evernoterobot')
+bot.config = config  # FIXME:
 app.bot = bot

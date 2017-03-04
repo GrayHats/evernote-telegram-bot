@@ -1,12 +1,12 @@
 import json
 import aiohttp
-import settings
+from config import config
 
 TRACK_URL = 'https://api.botan.io/track'
 SHORTENER_URL = 'https://api.botan.io/s/'
 
 async def track(uid, message, name='Message', loop=None):
-    token = settings.SECRET['botan_token']
+    token = config['botan_token']
     params = {"token": token, "uid": uid, "name": name}
     data = json.dumps(message)
     headers = {'Content-type': 'application/json'}
