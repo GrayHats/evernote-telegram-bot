@@ -70,12 +70,22 @@ class BotService:
         )
         logging.config.dictConfig(log_config)
 
+    def __start_process(name, cmd, pidfile):
+        print('Starting {}'.format(name), end="")
+        os.system(cmd)
+        time.sleep(1)
+        if check_process(pidfile):
+            print(green('OK'))
+        else:
+            print(red('FAILED'))
+
     @cmd
     def start(self, use_gunicorn=False):
         os.makedirs(self.config['logs_dir'], mode=0o700, exist_ok=True)
         os.makedirs(self.config['downloads_dir'], mode=0o700, exist_ok=True)
 
         if not use_gunicorn:
+            # import here because there are import config that reads file. Some little optimization
             from src.web.webapp import app
             aioweb.run_app(app)
             sys.exit(0)
@@ -83,28 +93,36 @@ class BotService:
         gunicorn_pidfile = join(self.config['project_dir'], 'gunicorn.pid')
         import gunicorn_config
 
-        if not os.path.exists(gunicorn_pidfile):
-            print('Starting gunicorn...', end="")
-            gunicorn_config_file = join(
-                self.config['project_dir'], 'src/gunicorn_config.py'
-            )
-            cmd = 'gunicorn --config {0} {1}'.format(
-                gunicorn_config_file,
-                gunicorn_config.app_name
-            )
-            os.system(cmd)
-            time.sleep(1)
-            if check_process(gunicorn_pidfile):
-                print(green('OK'))
-            else:
-                print(red('FAILED'))
-        else:
+        if os.path.exists(gunicorn_pidfile):
             print("Gunicorn already running")
-
-        # print('Starting downloader...')
-        # TelegramDownloaderDaemon(downloader_pidfile, config['downloads_dir']).start()
-        # print('Starting dealer...')
-        # EvernoteDealerDaemon(dealer_pidfile).start()
+            sys.exit(0)
+        # Gunicorn
+        self.__start_process(
+            'Gunicorn',
+            'gunicorn --config {0} {1}'.format(
+                join(self.config['project_dir'], 'src/gunicorn_config.py'),
+                gunicorn_config.app_name
+            ),
+            gunicorn_pidfile
+        )
+        # Downloader daemon
+        downloader_pidfile = join(self.config['project_dir'], 'downloader.pid')
+        self.__start_process(
+            'File downloader daemon',
+            './downoader.py --pidfile={0} --token={1} --downloads_dir={2} start'.format(
+                downloader_pidfile,
+                self.config['telegram']['token'],
+                self.config['downloads_dir']
+            ),
+            downloader_pidfile
+        )
+        # Dealer daemon
+        dealer_pidfile = join(self.config['project_dir'], 'dealer.pid')
+        self.__start_process(
+            'Evernote dealer daemon',
+            './dealer.py --pidfile={} start'.format(dealer_pidfile),
+            dealer_pidfile
+        )
 
     @cmd
     def stop(self):
