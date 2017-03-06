@@ -85,7 +85,8 @@ class BotService:
         os.makedirs(self.config['downloads_dir'], mode=0o700, exist_ok=True)
 
         if not use_gunicorn:
-            # import here because there are import config that reads file. Some little optimization
+            # import here because there are import config that reads file.
+            # Some little optimization
             from src.web.webapp import app
             aioweb.run_app(app)
             sys.exit(0)
@@ -107,20 +108,24 @@ class BotService:
         )
         # Downloader daemon
         downloader_pidfile = join(self.config['project_dir'], 'downloader.pid')
+        file = join(self.config['project_dir'], 'src/daemons/downloader.py')
         self.__start_process(
             'File downloader daemon',
-            './downoader.py --pidfile={0} --token={1} --downloads_dir={2} start'.format(
+            '{file} --pidfile={0} --token={1} --downloads_dir={2} \
+            start'.format(
                 downloader_pidfile,
                 self.config['telegram']['token'],
-                self.config['downloads_dir']
+                self.config['downloads_dir'],
+                file=file
             ),
             downloader_pidfile
         )
         # Dealer daemon
         dealer_pidfile = join(self.config['project_dir'], 'dealer.pid')
+        file = join(self.config['project_dir'], 'src/daemons/dealer.py')
         self.__start_process(
             'Evernote dealer daemon',
-            './dealer.py --pidfile={} start'.format(dealer_pidfile),
+            '{file} --pidfile={} start'.format(dealer_pidfile, file=file),
             dealer_pidfile
         )
 

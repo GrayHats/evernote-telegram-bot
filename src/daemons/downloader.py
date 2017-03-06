@@ -1,5 +1,12 @@
+#!/usr/bin/env python3
+
 import sys
 import argparse
+from os.path import dirname
+from os.path import realpath
+
+sys.path.append(realpath(dirname(dirname(__file__))))
+
 from bot.downloader import TelegramDownloader
 from daemons.daemon import Daemon
 

@@ -3,7 +3,7 @@ import logging
 import time
 import traceback
 
-import settings
+from config import config
 from bot import EvernoteBot
 from bot.message_handlers import TextHandler
 from bot.message_handlers import PhotoHandler
@@ -20,7 +20,7 @@ class EvernoteDealer:
 
     def __init__(self, loop=None):
         self.logger = logging.getLogger('dealer')
-        self._telegram_api = BotApi(settings.TELEGRAM['token'])
+        self._telegram_api = BotApi(config['telegram']['token'])
         self.__loop = loop or asyncio.get_event_loop()
         self.__handlers = {}
 
