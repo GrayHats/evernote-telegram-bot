@@ -19,17 +19,20 @@ from ext.telegram.api import BotApi
 class EvernoteDealer:
 
     def __init__(self, loop=None):
+        self.__loop = loop or asyncio.get_event_loop()
         self.logger = logging.getLogger('dealer')
         self._telegram_api = BotApi(config['telegram']['token'])
-        self.__loop = loop or asyncio.get_event_loop()
         self.__handlers = {}
 
-        self.register_handler('text', TextHandler)
-        self.register_handler('photo', PhotoHandler)
-        self.register_handler('video', VideoHandler)
-        self.register_handler('document', DocumentHandler)
-        self.register_handler('voice', VoiceHandler)
-        self.register_handler('location', LocationHandler)
+        handlers = (
+            ('text', TextHandler),
+            ('photo', PhotoHandler),
+            ('video', VideoHandler),
+            ('document', DocumentHandler),
+            ('voice', VoiceHandler),
+            ('location', LocationHandler)
+        )
+        map(lambda name, func: self.register_handler(name, func), handlers)
 
     def run(self):
         try:
@@ -141,7 +144,7 @@ get new token'
         )
 
     async def edit_telegram_message(self, chat_id, message_id, text):
-        bot = EvernoteBot(settings.TELEGRAM['token'], 'evernoterobot')
+        bot = EvernoteBot(config['telegram']['token'], 'evernoterobot')
         asyncio.ensure_future(
             bot.api.editMessageText(chat_id, message_id, text)
         )
