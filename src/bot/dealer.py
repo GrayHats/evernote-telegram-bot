@@ -17,6 +17,10 @@ from ext.telegram.api import BotApi
 
 
 class EvernoteDealer:
+    '''
+    This class can fetch telegram update(s) from storage and pass them to
+    appropriate handler(s)
+    '''
 
     def __init__(self, loop=None):
         self.__loop = loop or asyncio.get_event_loop()
@@ -35,33 +39,20 @@ class EvernoteDealer:
         map(lambda name, func: self.register_handler(name, func), handlers)
 
     def run(self):
-        try:
+        self.__loop.run_until_complete(
             asyncio.ensure_future(self.async_run())
-            self.__loop.run_forever()
-            self.logger.info('Dealer done.')
-        except Exception as e:
-            self.logger.fatal('Dealer fail')
-            self.logger.fatal(e, exc_info=1)
+        )
+        self.logger.fatal('Dealer down!')
 
     async def async_run(self):
-        try:
-            while True:
-                updates_by_user = self.fetch_updates()
-                if not updates_by_user:
-                    await asyncio.sleep(0.1)
-                    continue
-                for user_id, updates in updates_by_user.items():
-                    try:
-                        user = User.get({'id': user_id})
-                        asyncio.ensure_future(
-                            self.process_user_updates(user, updates)
-                        )
-                    except Exception as e:
-                        message = "Can't process updates for user \
-{0}\n{1}".format(user_id, e)
-                        self.logger.error(message, exc_info=1)
-        except Exception:
-            self.logger.fatal('Dealer DOWN!!!', exc_info=1)
+        while True:
+            updates_by_user = self.fetch_updates()
+            if not updates_by_user:
+                await asyncio.sleep(0.1)
+                continue
+            for user_id, updates in updates_by_user.items():
+                user = User.get({'id': user_id})
+                asyncio.ensure_future(self.process_user_updates(user, updates))
 
     def fetch_updates(self):
         self.logger.debug('Fetching telegram updates...')
