@@ -32,7 +32,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     cmd = args.CMD
 
-    daemon = TelegramDownloaderDaemon(args.pidfile, args.download_dir)
+    daemon = TelegramDownloaderDaemon(
+        args.token, args.pidfile, args.download_dir
+    )
     if cmd == 'start':
         daemon.start()
     elif cmd == 'stop':

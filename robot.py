@@ -41,6 +41,44 @@ def get_pid(pidfile):
         return pid
 
 
+class Service:
+
+    def __init__(self, config, name, exec_file):
+        self.name = name
+        self.exec_file = exec_file
+        self.config = config
+        self.pidfile = join(config['project_dir'], '{}.pid'.format(name))
+
+    def start(self, options):
+        options = ' '.join(
+            ['{0}={1}'.format(k, v) for k, v in options.items()]
+        )
+        cmd = '{exec_file} {options} start'.format(
+            exec_file=self.exec_file,
+            options=options
+        )
+        print('Starting {}'.format(self.name), end="")
+        os.system(cmd)
+        time.sleep(1)
+        if process_exists(self.pidfile):
+            print(green('OK'))
+        else:
+            print(red('FAILED'))
+
+    def stop(self):
+        cmd = '{file} --pidfile={pidfile} stop'.format(
+            file=self.exec_file,
+            pidfile=self.pidfile
+        )
+        print('Stopping {}'.format(self.name), end="")
+        os.system(cmd)
+        time.sleep(1)
+        if not process_exists(self.pidfile):
+            print(green('OK'))
+        else:
+            print(red('FAILED'))
+
+
 def commands(cls):
     for name, method in cls.__dict__.items():
         if hasattr(method, 'cmd'):
@@ -68,62 +106,17 @@ class BotService:
             self.config['smtp']
         )
         logging.config.dictConfig(log_config)
-        self.services = {
-            'gunicorn': {
-                'pidfile': join(self.config['project_dir'], 'gunicorn.pid'),
-                'exec_file': 'gunicorn',
-            },
-            'dealer': {
-                'pidfile': join(self.config['project_dir'], 'dealer.pid'),
-                'exec_file': join(self.config['project_dir'], 'src/daemons/dealer.py'),
-            },
-            'downloader': {
-                'pidfile': join(self.config['project_dir'], 'downloader.pid'),
-                'exec_file': join(self.config['project_dir'], 'src/daemons/downloader.py'),
-            },
-        }
-
-    def __get_pidfile(self, service_name):
-        pidfiles = {
-            'dealer': join(self.config['project_dir'], 'dealer.pid'),
-            'downloader': join(self.config['project_dir'], 'downloader.pid'),
-            'gunicorn': join(self.config['project_dir'], 'gunicorn.pid')
-        }
-        return pidfiles[service_name]
-
-    def __start_service(name, cmd, pidfile):
-        print('Starting {}'.format(name), end="")
-        os.system(cmd)
-        time.sleep(1)
-        if process_exists(pidfile):
-            print(green('OK'))
-        else:
-            print(red('FAILED'))
-
-    def __stop_service(self, service_name):
-        print('Stopping {}...'.format(service_name), end="")
-        pidfile = self.__get_pidfile(service_name)
-        cmd = '{file} --pidfile={pidfile} stop'.format(
-            file=join(self.config['project_dir'], 'src/daemons/{}.py'.format(service_name)),
-            pidfile=pidfile
+        self.dealer = Service(
+            config,
+            'dealer',
+            join(config['project_dir'], 'src/daemons/dealer.py')
         )
-        os.system(cmd)
-        if not process_exists(pidfile):
-            print(green('OK'))
-        else:
-            print(red('FAILED'))
-
-    def __stop_process(process_name, pidfile):
-        print('Stopping {}...'.format(process_name), end="")
-        try:
-            os.kill(get_pid(pidfile), signal.SIGTERM)
-            os.unlink(pidfile)
-            print(green('OK'))
-        except Exception:
-            if process_exists(pidfile):
-                print(red('FAILED'))
-            else:
-                print(green('OK'))
+        self.downloader = Service(
+            config,
+            'downloader',
+            join(config['project_dir'], 'src/daemons/downloader.py')
+        )
+        self.gunicorn = Service(config, 'gunicorn', 'gunicorn')
 
     @cmd
     def start(self, use_gunicorn=False):
@@ -137,49 +130,25 @@ class BotService:
             aioweb.run_app(app)
             sys.exit(0)
 
-        gunicorn_pidfile = join(self.config['project_dir'], 'gunicorn.pid')
         import gunicorn_config
-
-        if os.path.exists(gunicorn_pidfile):
-            print("Gunicorn already running")
-            sys.exit(0)
-        # Gunicorn
-        self.__start_service(
-            'Gunicorn',
-            'gunicorn --config {0} {1}'.format(
-                join(self.config['project_dir'], 'src/gunicorn_config.py'),
-                gunicorn_config.app_name
-            ),
-            gunicorn_pidfile
+        config_path = join(
+            self.config['project_dir'], 'src/gunicorn_config.py'
         )
-        # Downloader daemon
-        downloader_pidfile = join(self.config['project_dir'], 'downloader.pid')
-        file = join(self.config['project_dir'], 'src/daemons/downloader.py')
-        self.__start_service(
-            'File downloader daemon',
-            '{file} --pidfile={0} --token={1} --downloads_dir={2} \
-            start'.format(
-                downloader_pidfile,
-                self.config['telegram']['token'],
-                self.config['downloads_dir'],
-                file=file
-            ),
-            downloader_pidfile
-        )
-        # Dealer daemon
-        dealer_pidfile = join(self.config['project_dir'], 'dealer.pid')
-        file = join(self.config['project_dir'], 'src/daemons/dealer.py')
-        self.__start_service(
-            'Evernote dealer daemon',
-            '{file} --pidfile={} start'.format(dealer_pidfile, file=file),
-            dealer_pidfile
-        )
+        self.gunicorn.start({
+            '--config': config_path,
+            '--app': gunicorn_config.app_name,
+        })
+        self.downloader.start({
+            '--token': self.config['telegram']['token'],
+            '--downloads_dir': join(self.config['project_dir'], 'downloads')
+        })
+        self.dealer.start({})
 
     @cmd
     def stop(self):
-        self.__stop_service('downloader')
-        self.__stop_service('dealer')
-        self.__stop_process('gunicorn', self.__get_pidfile('gunicorn'))
+        self.downloader.stop()
+        self.dealer.stop()
+        self.gunicorn.stop()
 
     @cmd
     def restart(self):
@@ -189,15 +158,15 @@ class BotService:
     @cmd
     def reload(self):
         print('Reloading gunicorn... ', end="")
-        pidfile = self.services['gunicorn']['pidfile']
-        os.kill(get_pid(pidfile), signal.SIGHUP)
+        os.kill(get_pid(self.gunicorn.pidfile), signal.SIGHUP)
         print(green('OK'))
 
     @cmd
     def status(self):
-        for service in self.services:
-            print('{0}: '.format(service['name'].capitalize()), end="")
-            if process_exists(service['pidfile']):
+        services = [self.dealer, self.downloader, self.gunicorn]
+        for service in services:
+            print('{0}: '.format(service.name.capitalize()), end="")
+            if process_exists(service.pidfile):
                 print(green('Started'))
             else:
                 print(red('Stopped'))
