@@ -97,26 +97,26 @@ class BotService:
     commands = []
 
     def __init__(self, config_file):
-        os.environ['EVERNOTEROBOT_CONFIG'] = config_file
+        os.environ['EVERNOTEROBOT_CONFIG'] = config_file or ''
         config = importlib.import_module('src.config')
         self.config = config.config
         log_config = get_config(
             self.config['project_name'],
             self.config['logs_dir'],
-            self.config['smtp']
+            self.config.get('smtp')
         )
         logging.config.dictConfig(log_config)
         self.dealer = Service(
-            config,
+            self.config,
             'dealer',
-            join(config['project_dir'], 'src/daemons/dealer.py')
+            join(self.config['project_dir'], 'src/daemons/dealer.py')
         )
         self.downloader = Service(
-            config,
+            self.config,
             'downloader',
-            join(config['project_dir'], 'src/daemons/downloader.py')
+            join(self.config['project_dir'], 'src/daemons/downloader.py')
         )
-        self.gunicorn = Service(config, 'gunicorn', 'gunicorn')
+        self.gunicorn = Service(self.config, 'gunicorn', 'gunicorn')
 
     @cmd
     def start(self, use_gunicorn=False):

@@ -50,7 +50,7 @@ class SslSMTPHandler(SMTPHandler):
 
 
 def get_config(project_name, logs_dir, smtp_settings):
-    return {
+    config = {
         'version': 1,
         'disable_existing_loggers': False,
 
@@ -101,13 +101,9 @@ def get_config(project_name, logs_dir, smtp_settings):
             },
             'email': {
                 'level': 'ERROR',
-                'class': 'src.utils.logs.SslSMTPHandler',
-                'mailhost': (smtp_settings['host'], smtp_settings['port']),
-                'fromaddr': smtp_settings['email'],
-                'toaddrs': [smtp_settings['email']],
-                'subject': '',
-                'credentials': (smtp_settings['user'], smtp_settings['password']),
-                'secure': (),
+                'class': 'logging.FileHandler',
+                'filename': join(logs_dir, 'email.log'),
+                'formatter': 'default',
             },
         },
 
@@ -167,3 +163,18 @@ def get_config(project_name, logs_dir, smtp_settings):
             },
         },
     }
+    if smtp_settings:
+        config['handlers']['email'] = {
+                'level': 'ERROR',
+                'class': 'src.utils.logs.SslSMTPHandler',
+                'mailhost': (smtp_settings['host'], smtp_settings['port']),
+                'fromaddr': smtp_settings['email'],
+                'toaddrs': [smtp_settings['email']],
+                'subject': '',
+                'credentials': (
+                    smtp_settings['user'],
+                    smtp_settings['password']
+                ),
+                'secure': (),
+        }
+    return config
