@@ -7,6 +7,7 @@ from os.path import realpath
 import asyncio
 from unittest.mock import Mock
 import importlib
+import shutil
 
 import pytest
 
@@ -122,3 +123,19 @@ def testbot():
     bot.cache.set = AsyncMock()
     bot.update_notebooks_cache = AsyncMock()
     return bot
+
+
+def delete_cached_files(root_dir):
+    for dir_path, dirnames, filenames in os.walk(root_dir):
+        for name in dirnames:
+            path = os.path.join(dir_path, name)
+            if name in ('__pycache__', '.cache'):
+                shutil.rmtree(path)
+        for name in filenames:
+            filename = os.path.join(dir_path, name)
+            _, ext = os.path.splitext(filename)
+            if ext == '.pyc':
+                os.unlink(filename)
+
+
+delete_cached_files(realpath(dirname(__file__)))
