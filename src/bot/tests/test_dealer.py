@@ -24,7 +24,7 @@ def test_fetch_updates():
                           status_message_id=3,
                           message={'data': 'woohoo'},
                           created=datetime.datetime(2016, 9, 1, 12, 30, 1))
-    TelegramUpdate.create(user_id=1,
+    TelegramUpdate.create(user_id=2,
                           request_type='text',
                           status_message_id=4,
                           message={'data': 'yeah!'},
@@ -32,11 +32,13 @@ def test_fetch_updates():
     dealer = EvernoteDealer()
     user_updates = dealer.fetch_updates()
     updates = user_updates[1]
-    assert len(updates) == 3
-    assert updates[0].created < updates[1].created < updates[2].created
+    updates2 = user_updates[2]
+    assert len(updates) == 2
+    assert len(updates2) == 1
+    assert updates[0].created < updates2[0].created < updates[1].created
     assert updates[0].status_message_id == 3
-    assert updates[1].status_message_id == 4
-    assert updates[2].status_message_id == 2
+    assert updates[1].status_message_id == 2
+    assert updates2[0].status_message_id == 4
 
 
 # @pytest.mark.use_mongo

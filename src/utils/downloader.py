@@ -27,8 +27,8 @@ class DownloadError(Exception):
 
 class HttpDownloader:
 
-    def __init__(self, download_dir=None, *, loop=None):
-        self.logger = logging.getLogger('http_downloader')
+    def __init__(self, download_dir=None, *, loop=None, logger=None):
+        self.logger = logger or logging.getLogger('http_downloader')
         self._loop = loop or asyncio.get_event_loop()
         self._executor = ThreadPoolExecutor(max_workers=10)
         if download_dir is None:
