@@ -66,10 +66,7 @@ class Service:
             print(red('FAILED'))
 
     def stop(self):
-        cmd = '{file} --pidfile={pidfile} stop'.format(
-            file=self.exec_file,
-            pidfile=self.pidfile
-        )
+        cmd = '{file} stop'.format(file=self.exec_file)
         print('Stopping {}...'.format(self.name), end="")
         os.system(cmd)
         time.sleep(1)
@@ -127,6 +124,8 @@ class BotService:
         os.makedirs(self.config['logs_dir'], mode=0o700, exist_ok=True)
         os.makedirs(self.config['downloads_dir'], mode=0o700, exist_ok=True)
 
+        self.downloader.start({})
+        self.dealer.start({})
         if not use_gunicorn:
             # import here because there are import config that reads file.
             # Some little optimization
@@ -139,17 +138,8 @@ class BotService:
             self.config['project_dir'], 'src/config/gunicorn.py'
         )
         self.gunicorn.start({
-            '--pidfile': join(self.config['project_dir'], 'gunicorn.pid'),
             '--config': config_path,
             '--app': gunicorn_config.app_name,
-        })
-        self.downloader.start({
-            '--pidfile': join(self.config['project_dir'], 'downloader.pid'),
-            '--token': self.config['telegram']['token'],
-            '--download_dir': join(self.config['project_dir'], 'downloads')
-        })
-        self.dealer.start({
-            '--pidfile': join(self.config['project_dir'], 'dealer.pid'),
         })
 
     @cmd
@@ -159,9 +149,9 @@ class BotService:
         self.gunicorn.stop()
 
     @cmd
-    def restart(self):
+    def restart(self, use_gunicorn=False):
         self.stop()
-        self.start()
+        self.start(use_gunicorn)
 
     @cmd
     def reload(self):
@@ -209,7 +199,7 @@ if __name__ == "__main__":
     elif cmd == 'stop':
         service.stop()
     elif cmd == 'restart':
-        service.restart()
+        service.restart(use_gunicorn)
     elif cmd == 'reload':
         service.reload()
     elif cmd == 'status':

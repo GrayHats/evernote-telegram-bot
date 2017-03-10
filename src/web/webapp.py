@@ -1,16 +1,17 @@
-import logging.config
 import os
+import logging.config
 from os.path import realpath
 from os.path import dirname
 from importlib.util import spec_from_file_location
 from importlib.util import module_from_spec
-import aiohttp.web
-import aiohttp_jinja2
-import jinja2
-from bot import EvernoteBot
 
-from src.utils.logs import get_config
+import jinja2
+import aiohttp_jinja2
+import aiohttp.web
+
+from bot import EvernoteBot
 from config import config
+from src.utils.logs import get_config
 
 
 def get_module_info(module_name):

@@ -4,11 +4,13 @@ import sys
 import argparse
 from os.path import dirname
 from os.path import realpath
+from os.path import join
 
 sys.path.append(realpath(dirname(dirname(__file__))))
 
 from bot.downloader import TelegramDownloader
 from daemons.daemon import Daemon
+from config import config
 
 
 class TelegramDownloaderDaemon(Daemon):
@@ -25,19 +27,16 @@ class TelegramDownloaderDaemon(Daemon):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pidfile', required=True)
-    parser.add_argument('--token')
-    parser.add_argument('--download_dir')
     parser.add_argument('CMD')
     args = parser.parse_args()
     cmd = args.CMD
 
     daemon = TelegramDownloaderDaemon(
-        args.token, args.pidfile, args.download_dir
+        config['telegram']['token'],
+        join(config['project_dir'], 'downloader.pid'),
+        config['downloads_dir']
     )
     if cmd == 'start':
-        assert args.token
-        assert args.download_dir
         daemon.start()
     elif cmd == 'stop':
         daemon.stop()
