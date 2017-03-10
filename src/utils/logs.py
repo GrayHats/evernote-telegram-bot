@@ -50,6 +50,22 @@ class SslSMTPHandler(SMTPHandler):
 
 
 def get_config(project_name, logs_dir, smtp_settings):
+
+    def file_handler(filename, log_level='DEBUG'):
+        return {
+                'level': log_level,
+                'class': 'logging.FileHandler',
+                'filename': join(logs_dir, filename),
+                'formatter': 'default',
+        }
+
+    def logger(level='INFO', handlers=None, propagate=False):
+        return {
+            'level': level,
+            'handlers': handlers or [],
+            'propagate': propagate,
+        }
+
     config = {
         'version': 1,
         'disable_existing_loggers': False,
@@ -69,98 +85,28 @@ def get_config(project_name, logs_dir, smtp_settings):
                 'class': 'logging.FileHandler',
                 'filename': join(logs_dir, 'access.log')
             },
-            'file': {
-                'level': 'DEBUG',
-                'class': 'logging.FileHandler',
-                'filename': join(logs_dir, '%s.log' % project_name),
-                'formatter': 'default',
-            },
-            'evernote_api_file': {
-                'level': 'DEBUG',
-                'class': 'logging.FileHandler',
-                'filename': join(logs_dir, 'evernote.log'),
-                'formatter': 'default',
-            },
-            'telegram_api_file': {
-                'level': 'DEBUG',
-                'class': 'logging.FileHandler',
-                'filename': join(logs_dir, 'telegram.log'),
-                'formatter': 'default',
-            },
-            'dealer_file': {
-                'level': 'INFO',
-                'class': 'logging.FileHandler',
-                'filename': join(logs_dir, 'dealer.log'),
-                'formatter': 'default',
-            },
-            'downloader_file': {
-                'level': 'DEBUG',
-                'class': 'logging.FileHandler',
-                'filename': join(logs_dir, 'downloader.log'),
-                'formatter': 'default',
-            },
-            'email': {
-                'level': 'ERROR',
-                'class': 'logging.FileHandler',
-                'filename': join(logs_dir, 'email.log'),
-                'formatter': 'default',
-            },
+            'file': file_handler('%s.log' % project_name),
+            'evernote_api_file': file_handler('evernote.log'),
+            'telegram_api_file': file_handler('telegram.log'),
+            'dealer_file': file_handler('dealer.log', 'INFO'),
+            'downloader_file': file_handler('downloader.log'),
+            'email': file_handler('email.log', 'ERROR'),
         },
 
         'loggers': {
-            'aiohttp.access': {
-                'level': 'INFO',
-                'handlers': ['accessfile'],
-                'propagate': False,
-            },
-            'aiohttp.server': {
-                'level': 'INFO',
-                'handlers': ['file', 'email'],
-                'propagate': False,
-            },
-            'gunicorn.access': {
-                'level': 'INFO',
-                'handlers': ['accessfile'],
-                'propagate': False,
-            },
-            'gunicorn.error': {
-                'level': 'INFO',
-                'handlers': ['file', 'email'],
-                'propagate': False,
-            },
+            'aiohttp.access': logger(handlers=['accessfile']),
+            'aiohttp.server': logger(handlers=['file', 'email']),
+            'gunicorn.access': logger(handlers=['accessfile']),
+            'gunicorn.error': logger(handlers=['file', 'email']),
             # APIs
-            'evernote_api': {
-                'level': 'ERROR',
-                'handlers': ['file', 'evernote_api_file', 'stdout', 'email'],
-                'propagate': False,
-            },
-            'telegram_api': {
-                'level': 'ERROR',
-                'handlers': ['telegram_api_file', 'email'],
-                'propagate': False,
-            },
+            'evernote_api': logger('ERROR', ['evernote_api_file', 'email']),
+            'telegram_api': logger('ERROR', ['telegram_api_file', 'email']),
             # daemons
-            'dealer': {
-                'level': 'ERROR',
-                'handlers': ['dealer_file', 'stdout', 'email'],
-                'propagate': False,
-            },
-            'downloader': {
-                'level': 'ERROR',
-                'handlers': ['downloader_file', 'stdout', 'email'],
-                'propagate': False,
-            },
+            'dealer': logger('ERROR', ['dealer_file', 'email']),
+            'downloader': logger('ERROR', ['downloader_file', 'email']),
             # bot
-            'bot': {
-                'level': 'WARNING',
-                'handlers': ['file', 'email'],
-                'propagate': False,
-            },
-            '': {
-                'level': 'ERROR',
-                'handlers': ['file'],
-                'propagate': True,
-            },
+            'bot': logger('WARNING', ['file', 'email']),
+            '': logger('ERROR', ['file', 'email'], True),
         },
     }
     if smtp_settings:

@@ -1,7 +1,8 @@
 import uuid
 from abc import abstractmethod
 from numbers import Number
-from typing import List, Tuple
+from typing import List
+from typing import Tuple
 
 from pymongo import MongoClient
 from pymongo.collection import Collection

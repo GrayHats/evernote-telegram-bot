@@ -1,21 +1,19 @@
 import sys
-from os.path import dirname, realpath
-import contextlib
-import asyncio
 import gc
-import logging.config
+import contextlib
+from os.path import dirname
+from os.path import realpath
+import asyncio
 from unittest.mock import Mock
+import importlib
+
 import pytest
-from pymongo import MongoClient
 
 from bot import EvernoteBot
 from bot.model import Model
 
 sys.path.insert(0, realpath(dirname(dirname(__file__))))
-
-import settings
-
-# logging.config.dictConfig(settings.LOG_SETTINGS)
+config = importlib.import_module('config').config
 
 
 def setup_test_loop():
@@ -69,7 +67,6 @@ def pytest_runtest_setup(item):
         item.fixturenames.append('loop')
 
 
-
 @pytest.mark.tryfirst
 def pytest_pyfunc_call(pyfuncitem):
     """
@@ -77,7 +74,7 @@ def pytest_pyfunc_call(pyfuncitem):
     function call.
     """
     if 'use_mongo' in pyfuncitem.keywords:
-        settings.STORAGE = {
+        config['storage'] = {
             'class': 'bot.storage.MongoStorage',
             'host': 'localhost',
             'port': 27017,
@@ -109,12 +106,14 @@ class AsyncMock(Mock):
 
 @pytest.fixture
 def testbot():
-    bot = EvernoteBot(settings.TELEGRAM['token'], 'test_bot')
+    bot = EvernoteBot(config['telegram']['token'], 'test_bot')
     bot.track = Mock()
     bot.api = AsyncMock()
     bot.api.sendMessage = AsyncMock(return_value={'message_id': 1})
     bot.evernote_api = AsyncMock()
-    bot.evernote_api.get_oauth_data = AsyncMock(return_value={'oauth_url': 'test_oauth_url'})
+    bot.evernote_api.get_oauth_data = AsyncMock(
+        return_value={'oauth_url': 'test_oauth_url'}
+    )
     bot.evernote_api.list_notebooks = AsyncMock(
         return_value=[Model(guid='1', name='test_notebook')]
     )

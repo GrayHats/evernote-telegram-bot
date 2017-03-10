@@ -1,12 +1,12 @@
 import pytest
 from ext.evernote.api import AsyncEvernoteApi
-from settings import EVERNOTE
+from config import config
 
 
 @pytest.mark.skip(reason='Broken')
 @pytest.mark.async_test
 async def test_get_note():
-    auth_token = EVERNOTE['access_token']
+    auth_token = config['evernote']['access_token']
     api = AsyncEvernoteApi()
     # notebook = await api.get_default_notebook(auth_token)
     # assert notebook

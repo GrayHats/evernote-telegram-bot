@@ -9,7 +9,7 @@ from os.path import dirname, join, realpath, exists
 
 import pytest
 
-import settings
+from config import config
 from bot.downloader import TelegramDownloader
 from bot.model import DownloadTask
 
@@ -18,7 +18,7 @@ download_dir = join(tmp_dir, "".join([random.choice(string.ascii_letters) for i 
 
 
 def setup_module(module):
-    logging.config.dictConfig(settings.LOG_SETTINGS)
+    # logging.config.dictConfig(settings.LOG_SETTINGS)
     if not exists(download_dir):
         os.makedirs(download_dir)
 
@@ -42,7 +42,7 @@ async def test_download_file():
 
     task = DownloadTask.create(file_id=get_file_id2(), completed=False)
     task2 = DownloadTask.create(file_id=get_file_id1(), completed=False)
-    downloader = TelegramDownloader(settings.TELEGRAM['token'], download_dir)
+    downloader = TelegramDownloader(config['telegram']['token'], download_dir)
 
     async def url(file_id):
         if file_id == 'robots':
