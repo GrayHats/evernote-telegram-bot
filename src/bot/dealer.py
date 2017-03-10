@@ -28,12 +28,12 @@ class EvernoteDealer:
         self.logger = logging.getLogger('dealer')
         self._telegram_api = BotApi(config['telegram']['token'])
         self.__handlers = {
-            'text': [TextHandler],
-            'photo': [PhotoHandler],
-            'video': [VideoHandler],
-            'document': [DocumentHandler],
-            'voice': [VoiceHandler],
-            'location': [LocationHandler],
+            'text': [TextHandler()],
+            'photo': [PhotoHandler()],
+            'video': [VideoHandler()],
+            'document': [DocumentHandler()],
+            'voice': [VoiceHandler()],
+            'location': [LocationHandler()],
         }
 
     def run(self):

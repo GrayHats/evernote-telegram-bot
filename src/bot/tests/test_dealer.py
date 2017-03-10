@@ -1,16 +1,40 @@
+import string
 import datetime
 import json
 import os
+import random
 from os.path import exists
 
 import evernote.edam.type.ttypes as Types
 import pytest
 
-from bot import TelegramUpdate
-from bot import User
 from bot.dealer import EvernoteDealer
+from bot.model import TelegramUpdate
+from bot.model import User
 from bot.model import FailedUpdate
 from conftest import AsyncMock
+
+
+def generate_string(length):
+    symbols = [random.choice(string.ascii_letters) for x in range(1, length)]
+    return ''.join(symbols)
+
+
+@pytest.fixture
+def user():
+    note_guid = generate_string(32)
+    notebook_guid = generate_string(32)
+    user = User.create(
+        id=random.randint(1, 100),
+        name=generate_string(5),
+        username=generate_string(5),
+        telegram_chat_id=random.randint(1, 100),
+        mode='one_note',
+        evernote_access_token='token',
+        current_notebook={'guid': notebook_guid, 'name': 'test_notebook'},
+        places={'000': note_guid}
+    )
+    return user
 
 
 def test_fetch_updates():
@@ -46,35 +70,27 @@ def test_fetch_updates():
 #     test_fetch_updates()
 
 
-# @pytest.mark.async_test
-# async def test_process_text(text_update):
-#     update = json.loads(text_update)
-#     User.create(id=425606,
-#                 telegram_chat_id=2,
-#                 mode='one_note',
-#                 evernote_access_token='token',
-#                 current_notebook={ 'guid': '000', 'name': 'test_notebook' },
-#                 places={ '000': 'note_guid' })
-#     TelegramUpdate.create(user_id=425606,
-#                           request_type='text',
-#                           status_message_id=5,
-#                           message=update['message'])
-#     dealer = EvernoteDealer()
-#     mock_note_provider = AsyncMock()
-#     note = Types.Note()
-#     mock_note_provider.get_note = AsyncMock(return_value=note)
-#     mock_telegram_api = AsyncMock()
-#     dealer._telegram_api = mock_telegram_api
-#     for k, handlers in dealer._EvernoteDealer__handlers.items():
-#         for handler in handlers:
-#             handler._note_provider = mock_note_provider
-#     updates = dealer.fetch_updates()
-#     for user_id, update_list in updates.items():
-#         user = User.get({'id': user_id})
-#         await dealer.process_user_updates(user, update_list)
+@pytest.mark.async_test
+async def test_process_text(user):
+    TelegramUpdate.create(user_id=user.id,
+                          request_type='text',
+                          status_message_id=5,
+                          message=update['message'])
+    dealer = EvernoteDealer()
+    mock_note_provider = AsyncMock()
+    mock_note_provider.get_note = AsyncMock(return_value=Types.Note())
+    dealer._telegram_api = AsyncMock()
 
-#     assert mock_note_provider.get_note.call_count == 1
-#     assert dealer._EvernoteDealer__handlers['text'][0]._note_provider.update_note.call_count == 1
+    for k, handlers in dealer._EvernoteDealer__handlers.items():
+        for handler in handlers:
+            handler._note_provider = mock_note_provider
+    updates = dealer.fetch_updates()
+    for user_id, update_list in updates.items():
+        user = User.get({'id': user_id})
+        await dealer.process_user_updates(user, update_list)
+
+    assert mock_note_provider.get_note.call_count == 1
+    assert dealer._EvernoteDealer__handlers['text'][0]._note_provider.update_note.call_count == 1
 
 
 # @pytest.mark.async_test

@@ -4,7 +4,10 @@ import time
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
-from ext.evernote.client import NoteContent, Types, ErrorTypes, EvernoteSdk
+from ext.evernote.client import NoteContent
+from ext.evernote.client import Types
+from ext.evernote.client import ErrorTypes
+from ext.evernote.client import EvernoteSdk
 
 
 class EvernoteApiError(Exception):
@@ -41,11 +44,16 @@ def edam_user_exception(func):
             return func()
         except ErrorTypes.EDAMUserException as e:
             if e.errorCode == 3:
-                exc_info = ExceptionInfo(PermissionDenied, 'It seems that token is invalid (or has no permissions)')
+                message = 'Token is invalid (or has no permissions)'
+                exc_info = ExceptionInfo(PermissionDenied, message)
             elif e.errorCode == 9:
-                exc_info = ExceptionInfo(TokenExpired, 'Evernote access token is expired')
+                message = 'Evernote access token is expired'
+                exc_info = ExceptionInfo(TokenExpired, message)
             else:
-                exc_info = ExceptionInfo(EvernoteApiError, 'Error code = {0}, parameter = {1}'.format(e.errorCode, e.parameter))
+                message = 'Error code = {0}, parameter = {1}'.format(
+                    e.errorCode, e.parameter
+                )
+                exc_info = ExceptionInfo(EvernoteApiError, message)
         raise exc_info.exc_type(exc_info.message)
     return _wrap
 
