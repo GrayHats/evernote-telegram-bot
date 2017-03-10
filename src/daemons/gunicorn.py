@@ -8,13 +8,14 @@ from os.path import join
 from os.path import realpath
 from os.path import dirname
 
-sys.path.append(realpath(dirname(dirname(__file__))))
+sys.path.append(dirname(realpath(dirname(__file__))))
 
+import config.gunicorn as gunicorn_config
 from config import config
 
 
-def start(args):
-    os.system('gunicorn --config={0} {1}'.format(args.config, args.app))
+def start(config_file, app_name):
+    os.system('gunicorn --config={0} {1}'.format(config_file, app_name))
 
 
 def stop(pidfile):
@@ -28,23 +29,32 @@ def stop(pidfile):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config')
-    parser.add_argument('--app')
-    parser.add_argument('CMD')
-    args = parser.parse_args()
-    cmd = args.CMD
-    pidfile = join(config['project_dir'], 'gunicorn.pid')
+    try:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('CMD')
+        args = parser.parse_args()
+        cmd = args.CMD
 
-    if cmd == 'start':
-        assert args.config
-        assert args.app
-        start(args)
-    elif cmd == 'stop':
-        stop(pidfile)
-    elif cmd == 'restart':
-        stop()
-        start()
-    else:
-        print("Unknown command '{}'\n".format(cmd))
-        sys.exit(1)
+        pidfile = join(config['project_dir'], 'gunicorn.pid')
+        config_file = join(config['project_dir'], 'src/config/gunicorn.py')
+        app_name = gunicorn_config.app_name
+
+        if cmd == 'start':
+            start(config_file, app_name)
+        elif cmd == 'stop':
+            stop(pidfile)
+        elif cmd == 'restart':
+            stop(pidfile)
+            start(config_file, app_name)
+        elif cmd == 'reload':
+            with open(pidfile) as f:
+                pid = int(f.read())
+            os.kill(pid, signal.SIGHUP)
+        else:
+            print("Unknown command '{}'\n".format(cmd))
+            sys.exit(1)
+        print('OK')
+    except Exception:
+        print('FAILED')
+        import traceback
+        print(traceback.format_exc())

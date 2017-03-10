@@ -6,7 +6,7 @@ from os.path import dirname
 from os.path import realpath
 from os.path import join
 
-sys.path.append(realpath(dirname(dirname(__file__))))
+sys.path.append(dirname(realpath(dirname(__file__))))
 
 from bot.downloader import TelegramDownloader
 from daemons.daemon import Daemon
@@ -26,22 +26,28 @@ class TelegramDownloaderDaemon(Daemon):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('CMD')
-    args = parser.parse_args()
-    cmd = args.CMD
+    try:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('CMD')
+        args = parser.parse_args()
+        cmd = args.CMD
 
-    daemon = TelegramDownloaderDaemon(
-        config['telegram']['token'],
-        join(config['project_dir'], 'downloader.pid'),
-        config['downloads_dir']
-    )
-    if cmd == 'start':
-        daemon.start()
-    elif cmd == 'stop':
-        daemon.stop()
-    elif cmd == 'restart':
-        daemon.restart()
-    else:
-        print("Unknown command '{}'\n".format(cmd))
-        sys.exit(1)
+        daemon = TelegramDownloaderDaemon(
+            config['telegram']['token'],
+            join(config['project_dir'], 'downloader.pid'),
+            config['downloads_dir']
+        )
+        if cmd == 'start':
+            daemon.start()
+        elif cmd == 'stop':
+            daemon.stop()
+        elif cmd == 'restart':
+            daemon.restart()
+        else:
+            print("Unknown command '{}'\n".format(cmd))
+            sys.exit(1)
+        print('OK')
+    except Exception:
+        print('FAILED')
+        import traceback
+        print(traceback.format_exc())

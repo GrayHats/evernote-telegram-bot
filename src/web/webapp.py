@@ -11,7 +11,7 @@ import aiohttp.web
 
 from bot import EvernoteBot
 from config import config
-from src.utils.logs import get_config
+from utils.logs import get_config
 
 
 def get_module_info(module_name):

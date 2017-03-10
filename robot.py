@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
-import logging.config
 import sys
 import os
-import signal
-import time
 import asyncio
-from os.path import join
 import importlib
-from aiohttp import web as aioweb
-
-from src.utils.logs import get_config
+from os.path import join
+from os.path import basename
 
 
 def green(text):
@@ -35,47 +30,6 @@ def process_exists(pidfile):
     return True
 
 
-def get_pid(pidfile):
-    with open(pidfile) as f:
-        pid = int(f.read())
-        return pid
-
-
-class Service:
-
-    def __init__(self, config, name, exec_file):
-        self.name = name
-        self.exec_file = exec_file
-        self.config = config
-        self.pidfile = join(config['project_dir'], '{}.pid'.format(name))
-
-    def start(self, options):
-        options = ' '.join(
-            ['{0}={1}'.format(k, v) for k, v in options.items()]
-        )
-        cmd = '{exec_file} {options} start'.format(
-            exec_file=self.exec_file,
-            options=options
-        )
-        print('Starting {}...'.format(self.name), end="")
-        os.system(cmd)
-        time.sleep(1)
-        if process_exists(self.pidfile):
-            print(green('OK'))
-        else:
-            print(red('FAILED'))
-
-    def stop(self):
-        cmd = '{file} stop'.format(file=self.exec_file)
-        print('Stopping {}...'.format(self.name), end="")
-        os.system(cmd)
-        time.sleep(1)
-        if not process_exists(self.pidfile):
-            print(green('OK'))
-        else:
-            print(red('FAILED'))
-
-
 def commands(cls):
     for name, method in cls.__dict__.items():
         if hasattr(method, 'cmd'):
@@ -97,56 +51,36 @@ class BotService:
         os.environ['EVERNOTEROBOT_CONFIG'] = config_file or ''
         config = importlib.import_module('src.config')
         self.config = config.config
-        log_config = get_config(
-            self.config['project_name'],
-            self.config['logs_dir'],
-            self.config.get('smtp')
-        )
-        logging.config.dictConfig(log_config)
-        self.dealer = Service(
-            self.config,
-            'dealer',
-            join(self.config['project_dir'], 'src/daemons/dealer.py')
-        )
-        self.downloader = Service(
-            self.config,
-            'downloader',
-            join(self.config['project_dir'], 'src/daemons/downloader.py')
-        )
-        self.gunicorn = Service(
-            self.config,
-            'gunicorn',
-            join(self.config['project_dir'], 'src/daemons/gunicorn.py')
-        )
+        daemons_dir = join(self.config['project_dir'], 'src/daemons')
+        self.dealer = join(daemons_dir, 'dealer.py')
+        self.downloader = join(daemons_dir, 'downloader.py')
+        self.gunicorn = join(daemons_dir, 'gunicorn.py')
 
     @cmd
     def start(self, use_gunicorn=False):
         os.makedirs(self.config['logs_dir'], mode=0o700, exist_ok=True)
         os.makedirs(self.config['downloads_dir'], mode=0o700, exist_ok=True)
 
-        self.downloader.start({})
-        self.dealer.start({})
-        if not use_gunicorn:
+        print('Starting downloader...')
+        os.system('{file} start'.format(file=self.downloader))
+        print('Starting dealer...')
+        os.system('{file} start'.format(file=self.dealer))
+        if use_gunicorn:
+            print('Starting gunicorn...')
+            os.system('{file} start'.format(file=self.gunicorn))
+        else:
             # import here because there are import config that reads file.
             # Some little optimization
+            from aiohttp import web
             from src.web.webapp import app
-            aioweb.run_app(app)
-            sys.exit(0)
-
-        from config import gunicorn as gunicorn_config
-        config_path = join(
-            self.config['project_dir'], 'src/config/gunicorn.py'
-        )
-        self.gunicorn.start({
-            '--config': config_path,
-            '--app': gunicorn_config.app_name,
-        })
+            web.run_app(app)
 
     @cmd
     def stop(self):
-        self.dealer.stop()
-        self.downloader.stop()
-        self.gunicorn.stop()
+        services = [self.dealer, self.downloader, self.gunicorn]
+        for filename in services:
+            print('Stopping {}'.format(basename(filename)))
+            os.system('{file} stop'.format(file=filename))
 
     @cmd
     def restart(self, use_gunicorn=False):
@@ -155,20 +89,13 @@ class BotService:
 
     @cmd
     def reload(self):
-        print('Reloading gunicorn... ', end="")
-        os.kill(get_pid(self.gunicorn.pidfile), signal.SIGHUP)
-        print(green('OK'))
+        os.system('{file} reload'.format(file=self.gunicorn))
 
     @cmd
     def status(self):
         services = [self.dealer, self.downloader, self.gunicorn]
-        for service in services:
-            print('{0}: '.format(service.name.capitalize()), end="")
-            if process_exists(service.pidfile):
-                print(green('Started'))
-            else:
-                print(red('Stopped'))
-            print("\n")
+        for filename in services:
+            os.system('{file} status'.format(file=filename))
 
     def set_webhook(self):
         from ext.telegram.api import BotApi
