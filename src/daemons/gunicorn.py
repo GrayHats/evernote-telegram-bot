@@ -11,6 +11,9 @@ def start(args):
 
 
 def stop():
+    if not os.path.exists(args.pidfile):
+        print('pidfile %s does not exists. Daemon not running?' % args.pidfile)
+        return
     with open(args.pidfile) as f:
         pid = int(f.read())
     os.kill(pid, signal.SIGTERM)
@@ -20,13 +23,15 @@ def stop():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--pidfile', required=True)
-    parser.add_argument('--config', required=True)
-    parser.add_argument('--app', required=True)
+    parser.add_argument('--config')
+    parser.add_argument('--app')
     parser.add_argument('CMD')
     args = parser.parse_args()
     cmd = args.CMD
 
     if cmd == 'start':
+        assert args.config
+        assert args.app
         start(args)
     elif cmd == 'stop':
         stop()

@@ -1,8 +1,7 @@
 import multiprocessing
 from os.path import join
 
-from config import config
-
+import config
 
 bind = '127.0.0.1:{}'.format(config['gunicorn']['port'])
 backlog = 128

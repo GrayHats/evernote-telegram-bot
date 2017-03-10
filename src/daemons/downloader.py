@@ -26,8 +26,8 @@ class TelegramDownloaderDaemon(Daemon):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--pidfile', required=True)
-    parser.add_argument('--token', required=True)
-    parser.add_argument('--download_dir', required=True)
+    parser.add_argument('--token')
+    parser.add_argument('--download_dir')
     parser.add_argument('CMD')
     args = parser.parse_args()
     cmd = args.CMD
@@ -36,6 +36,8 @@ if __name__ == '__main__':
         args.token, args.pidfile, args.download_dir
     )
     if cmd == 'start':
+        assert args.token
+        assert args.download_dir
         daemon.start()
     elif cmd == 'stop':
         daemon.stop()

@@ -57,7 +57,7 @@ class Service:
             exec_file=self.exec_file,
             options=options
         )
-        print('Starting {}'.format(self.name), end="")
+        print('Starting {}...'.format(self.name), end="")
         os.system(cmd)
         time.sleep(1)
         if process_exists(self.pidfile):
@@ -70,7 +70,7 @@ class Service:
             file=self.exec_file,
             pidfile=self.pidfile
         )
-        print('Stopping {}'.format(self.name), end="")
+        print('Stopping {}...'.format(self.name), end="")
         os.system(cmd)
         time.sleep(1)
         if not process_exists(self.pidfile):
@@ -116,7 +116,11 @@ class BotService:
             'downloader',
             join(self.config['project_dir'], 'src/daemons/downloader.py')
         )
-        self.gunicorn = Service(self.config, 'gunicorn', 'gunicorn')
+        self.gunicorn = Service(
+            self.config,
+            'gunicorn',
+            join(self.config['project_dir'], 'src/daemons/gunicorn.py')
+        )
 
     @cmd
     def start(self, use_gunicorn=False):
@@ -130,24 +134,28 @@ class BotService:
             aioweb.run_app(app)
             sys.exit(0)
 
-        import gunicorn_config
+        from config import gunicorn as gunicorn_config
         config_path = join(
-            self.config['project_dir'], 'src/gunicorn_config.py'
+            self.config['project_dir'], 'src/config/gunicorn.py'
         )
         self.gunicorn.start({
+            '--pidfile': join(self.config['project_dir'], 'gunicorn.pid'),
             '--config': config_path,
             '--app': gunicorn_config.app_name,
         })
         self.downloader.start({
+            '--pidfile': join(self.config['project_dir'], 'downloader.pid'),
             '--token': self.config['telegram']['token'],
-            '--downloads_dir': join(self.config['project_dir'], 'downloads')
+            '--download_dir': join(self.config['project_dir'], 'downloads')
         })
-        self.dealer.start({})
+        self.dealer.start({
+            '--pidfile': join(self.config['project_dir'], 'dealer.pid'),
+        })
 
     @cmd
     def stop(self):
-        self.downloader.stop()
         self.dealer.stop()
+        self.downloader.stop()
         self.gunicorn.stop()
 
     @cmd

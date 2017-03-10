@@ -25,13 +25,13 @@ storage:
 #     password: password
 #     email: email@hostname
 
-# evernote:
-#     access_token: token
-#     basic_access:
-#         key: key
-#         secret: secret
-#         oauth_callback: url
+evernote:
+    access_token: token
+    basic_access:
+        key: key
+        secret: secret
+        oauth_callback: url
 
-# telegram:
-#     token: token
-#     webhook_url: url
+telegram:
+    token: token
+    webhook_url: url

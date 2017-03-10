@@ -54,7 +54,9 @@ for module_info in loaded_modules:
             app.router.add_route(*url_scheme)
 
 aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(template_path_list))
-log_config = get_config(config['project_name'], config['logs_dir'], config['smtp'])
+log_config = get_config(
+    config['project_name'], config['logs_dir'], config.get('smtp')
+)
 logging.config.dictConfig(log_config)
 app.logger = logging.getLogger('bot')
 bot = EvernoteBot(config['telegram']['token'], 'evernoterobot')
