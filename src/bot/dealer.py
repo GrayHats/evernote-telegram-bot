@@ -4,14 +4,15 @@ import time
 import traceback
 
 from config import config
-from bot import EvernoteBot
 from bot.message_handlers import TextHandler
 from bot.message_handlers import PhotoHandler
 from bot.message_handlers import VideoHandler
 from bot.message_handlers import DocumentHandler
 from bot.message_handlers import VoiceHandler
 from bot.message_handlers import LocationHandler
-from bot.model import TelegramUpdate, User, FailedUpdate
+from bot.model import TelegramUpdate
+from bot.model import User
+from bot.model import FailedUpdate
 from ext.evernote.api import TokenExpired
 from ext.telegram.api import BotApi
 
@@ -26,22 +27,18 @@ class EvernoteDealer:
         self.__loop = loop or asyncio.get_event_loop()
         self.logger = logging.getLogger('dealer')
         self._telegram_api = BotApi(config['telegram']['token'])
-        self.__handlers = {}
-
-        handlers = (
-            ('text', TextHandler),
-            ('photo', PhotoHandler),
-            ('video', VideoHandler),
-            ('document', DocumentHandler),
-            ('voice', VoiceHandler),
-            ('location', LocationHandler)
-        )
-        map(lambda name, func: self.register_handler(name, func), handlers)
+        self.__handlers = {
+            'text': [TextHandler],
+            'photo': [PhotoHandler],
+            'video': [VideoHandler],
+            'document': [DocumentHandler],
+            'voice': [VoiceHandler],
+            'location': [LocationHandler],
+        }
 
     def run(self):
-        self.__loop.run_until_complete(
-            asyncio.ensure_future(self.async_run())
-        )
+        task = asyncio.ensure_future(self.async_run())
+        self.__loop.run_until_complete(task)
         self.logger.fatal('Dealer down!')
 
     async def async_run(self):
@@ -59,6 +56,7 @@ class EvernoteDealer:
         updates_by_user = {}
         try:
             fetched_updates = []
+            # TODO: find and modify in one operation
             updates = TelegramUpdate.find({'in_process': {'$exists': False}},
                                           [('created', 1)])
             for entry in updates:
@@ -81,6 +79,13 @@ class EvernoteDealer:
             self.logger.error(err, exc_info=1)
         return updates_by_user
 
+    def update_status_message(self, user, update, text):
+        return asyncio.ensure_future(
+            self._telegram_api.editMessageText(
+                user.telegram_chat_id, update.status_message_id, text
+            )
+        )
+
     async def process_user_updates(self, user, update_list):
         start_ts = time.time()
         self.logger.debug(
@@ -95,52 +100,24 @@ class EvernoteDealer:
                     update.request_type.capitalize(),
                     time.time() - start_ts
                 )
-                asyncio.ensure_future(
-                    self._telegram_api.editMessageText(
-                        user.telegram_chat_id, update.status_message_id, text
-                    )
-                )
+                self.update_status_message(user, update, text)
             except TokenExpired:
-                asyncio.ensure_future(
-                    self.edit_telegram_message(
-                        user.telegram_chat_id,
-                        update.status_message_id,
-                        '⛔️ Evernote access token is expired. Send /start to \
-get new token'
-                    )
-                )
+                text = '⛔️ Evernote access token is expired. \
+Send /start to get new token'
+                self.update_status_message(user, update, text)
             except Exception as e:
                 self.logger.error(e, exc_info=1)
-                FailedUpdate.create(
-                    error=traceback.format_exc(), **update.save_data()
-                )
-                asyncio.ensure_future(
-                    self.edit_telegram_message(
-                        user.telegram_chat_id,
-                        update.status_message_id,
-                        '❌ Something went wrong. Please, try again'
-                    )
-                )
+                FailedUpdate.create(error=traceback.format_exc(),
+                                    **update.save_data())
+                text = '❌ Something went wrong. Please, try again'
+                self.update_status_message(user, update, text)
 
         self.logger.debug('Cleaning up...')
         for update in update_list:
             for handler in self.__handlers[update.request_type]:
                 await handler.cleanup(user, update)
 
-        self.logger.debug(
-            'Done. (user_id = {0}). Processing takes {1} s'.format(
-                user.id,
-                time.time() - start_ts
-            )
+        log_message = 'Done. (user_id = {0}). Processing takes {1} s'.format(
+            user.id, time.time() - start_ts
         )
-
-    async def edit_telegram_message(self, chat_id, message_id, text):
-        bot = EvernoteBot(config['telegram']['token'], 'evernoterobot')
-        asyncio.ensure_future(
-            bot.api.editMessageText(chat_id, message_id, text)
-        )
-
-    def register_handler(self, request_type, handler_class):
-        if not self.__handlers.get(request_type):
-            self.__handlers[request_type] = []
-        self.__handlers[request_type].append(handler_class())
+        self.logger.debug(log_message)
