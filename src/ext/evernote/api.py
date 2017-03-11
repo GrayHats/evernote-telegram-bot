@@ -2,12 +2,13 @@ import asyncio
 import hashlib
 import time
 import logging
+import re
+from os.path import basename
 from concurrent.futures import ThreadPoolExecutor
 
-from ext.evernote.client import NoteContent
-from ext.evernote.client import Types
-from ext.evernote.client import ErrorTypes
-from ext.evernote.client import EvernoteSdk
+from evernote.edam.type.ttypes import Types
+from evernote.edam.error.ttypes import ErrorTypes
+from ext.evernote import EvernoteSdk
 
 
 class EvernoteApiError(Exception):
@@ -56,6 +57,90 @@ def edam_user_exception(func):
                 exc_info = ExceptionInfo(EvernoteApiError, message)
         raise exc_info.exc_type(exc_info.message)
     return _wrap
+
+
+class NoteContent:
+
+    def __init__(self, note=None):
+        self.content_objects = []
+        self._old_content = ''
+        self._old_resources = []
+        if note is not None:
+            self._old_resources = note.resources or []
+            self._old_content = self._parse_content(note.content)
+        self._new_content = ''
+
+    def _parse_content(self, xml_content):
+        m = re.search(r'<en-note>(?P<content>.*)</en-note>', xml_content or '')
+        if m:
+            return m.group('content')
+        return ''
+
+    def add_file(self, path, mime_type):
+        resource, hexdigest = self._make_resource(path, mime_type)
+        self.content_objects.append({
+                'type': 'file',
+                'path': path,
+                'mime_type': mime_type,
+                'resource': resource,
+                'hexdigest': hexdigest,
+            })
+
+    def add_text(self, text):
+        if text:
+            self.content_objects.append({
+                    'type': 'string',
+                    'value': text,
+                })
+
+    def _make_resource(self, filename, mime_type):
+        with open(filename, 'rb') as f:
+            data_bytes = f.read()
+            md5 = hashlib.md5()
+            md5.update(data_bytes)
+
+            data = Types.Data()
+            data.size = len(data_bytes)
+            data.bodyHash = md5.digest()
+            data.body = data_bytes
+
+            resource = Types.Resource()
+            resource.mime = mime_type
+            resource.data = data
+            short_name = basename(filename)
+            resource.attributes = Types.ResourceAttributes(fileName=short_name)
+        return resource, md5.hexdigest()
+
+    def get_resources(self):
+        resources = [r for r in self._old_resources]
+        for entry in self.content_objects:
+            if entry['type'] == 'file':
+                resources.append(entry['resource'])
+        return resources
+
+    def __str__(self):
+        new_content = ''
+        for entry in self.content_objects:
+            content_entry = ''
+            if entry['type'] == 'file':
+                content_entry = '<br />\
+<en-media type="{mime_type}" hash="{md5}" />'.format(
+                    mime_type=entry['mime_type'],
+                    md5=entry['hexdigest']
+                )
+            elif entry['type'] == 'string':
+                content_entry = '<br />{text}'.format(
+                    text=entry['value'].replace('&', '&amp;')
+                )
+            new_content += content_entry
+
+        return '\
+<?xml version="1.0" encoding="UTF-8"?>\
+<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">\
+<en-note>{old_content}<br />{new_content}</en-note>'.format(
+                old_content=self._old_content,
+                new_content=new_content
+            )
 
 
 class AsyncEvernoteApi:

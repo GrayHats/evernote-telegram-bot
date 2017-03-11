@@ -3,20 +3,18 @@ import logging
 import os
 import traceback
 
-from bot import DownloadTask
-from bot import TelegramUpdate
-from bot import User
-from ext.evernote.api import NoteNotFound
-from ext.evernote.provider import NoteProvider
+from bot.model import DownloadTask
+from bot.model import TelegramUpdate
+from bot.model import User
 from ext.telegram.models import Message
-from ext.evernote.client import NoteContent, Types
+from ext.evernote.client import Evernote
 
 
 class BaseHandler:
 
     def __init__(self):
         self.logger = logging.getLogger()
-        self._note_provider = NoteProvider()
+        self.evernote = Evernote()
 
     async def execute(self, user: User, update: TelegramUpdate):
         if user.mode == 'one_note':
@@ -26,66 +24,46 @@ class BaseHandler:
         else:
             raise Exception('Invalid user mode {0}'.format(user.mode))
 
+    async def get_files(message: Message):
+        return []
+
+    async def get_text(self, message: Message):
+        return message.text or message.caption or ''
+
     async def _create_note(self, user: User, update: TelegramUpdate):
         message = Message(update.message)
-        text = message.text or message.caption or ''
-        note = Types.Note()
         title = update.request_type.capitalize()
-        if text:
-            title = ('%s...' % text[:15] if len(text) > 15 else text)
-        title = title.replace('\n', ' ')
-        title = title.replace('\r', ' ')
-        note.title = "[BOT] {0}".format(title)
-        note.notebookGuid = user.current_notebook['guid']
-        content = NoteContent(note)
-        await self.update_content(content, message)
-        note.resources = content.get_resources()
-        note.content = str(content)
-        return await self._note_provider.save_note(
-            user.evernote_access_token, note
+        text = await self.get_text(message)
+        files = await self.get_files(message)
+        await self.evernote.create_note(
+            user.evernote_access_token,
+            title,
+            text,
+            user.current_notebook['guid'],
+            files
         )
 
     async def _update_note(self, user: User, update: TelegramUpdate):
         notebook_guid = user.current_notebook['guid']
         note_guid = user.places.get(notebook_guid)
         if not note_guid:
-            raise Exception(
-                'There are no default note in notebook {0}'.format(
-                    user.current_notebook['name']
-                )
+            error = 'Default note in notebook {0} not exists'.format(
+                user.current_notebook['name']
             )
-        try:
-            note = await self._note_provider.get_note(
-                user.evernote_access_token, note_guid
-            )
-        except NoteNotFound:
-            self.logger.warning(
-                'Note {0} not found. Creating new note'.format(note_guid)
-            )
-            note = await self._create_note(user, update)
-            user.places[notebook_guid] = note.guid
-            user.save()
+            raise Exception(error)
 
-        content = NoteContent(note)
-        if update.has_file():
-            new_note = await self._create_note(user, update)
-            note_link = await self._note_provider.get_note_link(
-                user.evernote_access_token, new_note
-            )
-            content.add_text(
-                '{0}: <a href="{1}">{1}</a>'.format(
-                    update.request_type.capitalize(), note_link
-                )
-            )
-        else:
-            message = Message(update.message)
-            await self.update_content(content, message)
-        note.resources = content.get_resources()
-        note.content = str(content)
-        await self._note_provider.update_note(user.evernote_access_token, note)
+        message = Message(update.message)
+        text = await self.get_text(message)
+        files = await self.get_files(message)
 
-    async def update_content(self, content: NoteContent, message: Message):
-        content.add_text(message.text)
+        await self.evernote.update_note(
+            user.evernote_access_token,
+            note_guid,
+            notebook_guid,
+            text,
+            files,
+            request_type=update.request_type
+        )
 
     async def cleanup(self, user: User, update: TelegramUpdate):
         update.delete()
@@ -93,11 +71,10 @@ class BaseHandler:
 
 class FileHandler(BaseHandler):
 
-    async def update_content(self, content: NoteContent, message: Message):
+    async def get_files(self, message: Message):
         file_id = self.get_file_id(message)
         file_path, mime_type = await self.get_downloaded_file(file_id)
-        content.add_file(file_path, mime_type)
-        content.add_text(message.text)
+        return [(file_path, mime_type)]
 
     def get_file_id(self, message: Message):
         pass
@@ -156,10 +133,9 @@ class VoiceHandler(FileHandler):
     def get_file_id(self, message: Message):
         return message.voice.file_id
 
-    async def update_content(self, content: NoteContent, message: Message):
+    async def get_files(self, message: Message):
         file_id = self.get_file_id(message)
         ogg_file_path, mime_type = await self.get_downloaded_file(file_id)
-
         mime_type = 'audio/wav'
         wav_filename = "{0}.wav".format(ogg_file_path)
         try:
@@ -172,12 +148,12 @@ class VoiceHandler(FileHandler):
             wav_filename = ogg_file_path
             mime_type = 'audio/ogg'
 
-        content.add_file(wav_filename, mime_type)
+        return [(wav_filename, mime_type)]
 
 
 class LocationHandler(BaseHandler):
 
-    async def update_content(self, content: NoteContent, message: Message):
+    async def get_text(self, message: Message):
         latitude = message.location.latitude
         longitude = message.location.longitude
         maps_url = "https://maps.google.com/maps?q=%(lat)f,%(lng)f" % {
@@ -201,4 +177,4 @@ class LocationHandler(BaseHandler):
             if foursquare_id:
                 url = "https://foursquare.com/v/%s" % foursquare_id
                 text += "<br /><a href='%(url)s'>%(url)s</a>" % {'url': url}
-        content.add_text(text)
+        return text

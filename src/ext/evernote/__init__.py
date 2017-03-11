@@ -1,6 +1,9 @@
 import sys
-from os.path import dirname, realpath, join
+from os.path import dirname
+from os.path import realpath
+from os.path import join
 
-sys.path.insert(0, join(realpath(dirname(__file__)), 'evernote-sdk-python3/lib'))
+path = join(realpath(dirname(__file__)), 'evernote-sdk-python3/lib')
+sys.path.insert(0, path)
 
 from evernote.api.client import EvernoteClient as EvernoteSdk
