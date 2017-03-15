@@ -13,6 +13,9 @@ class Evernote:
         self.__api = AsyncEvernoteApi(sandbox=sandbox)
         self.cache = aiomcache.Client('127.0.0.1', 11211)  # TODO:
 
+    async def get_note(self, token, guid):
+        return await self.__api.get_note(token, guid)
+
     async def create_note(self, token, title, text,
                           notebook_guid, files: List):
         if text:

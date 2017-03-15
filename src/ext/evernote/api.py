@@ -6,8 +6,8 @@ import re
 from os.path import basename
 from concurrent.futures import ThreadPoolExecutor
 
-from evernote.edam.type.ttypes import Types
-from evernote.edam.error.ttypes import ErrorTypes
+import evernote.edam.type.ttypes as Types
+import evernote.edam.error.ttypes as ErrorTypes
 from ext.evernote import EvernoteSdk
 
 

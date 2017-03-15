@@ -4,19 +4,27 @@ import inspect
 import json
 import os
 import sys
-from os.path import realpath, dirname, join, basename
+from os.path import realpath
+from os.path import dirname
+from os.path import join
+from os.path import basename
 
 import aiomcache
 import asyncio
 
 from config import config
-from bot.model import User, TelegramUpdate, DownloadTask, StartSession
+from bot.model import User
+from bot.model import TelegramUpdate
+from bot.model import DownloadTask
+from bot.model import StartSession
 from ext.botan_async import track
 from ext.evernote.api import AsyncEvernoteApi
-from ext.evernote.client import EvernoteClient
-from ext.evernote.provider import NoteProvider
-from ext.telegram.bot import TelegramBot, TelegramBotCommand, TelegramBotError
-from ext.telegram.models import Message, CallbackQuery
+from ext.evernote.client import Evernote
+from ext.telegram.bot import TelegramBot
+from ext.telegram.bot import TelegramBotCommand
+from ext.telegram.bot import TelegramBotError
+from ext.telegram.models import Message
+from ext.telegram.models import CallbackQuery
 
 
 def get_commands(cmd_dir=None):
@@ -51,12 +59,12 @@ class EvernoteBot(TelegramBot):
     def __init__(self, token, name):
         super(EvernoteBot, self).__init__(token, name)
         config_data = config['evernote']['basic_access']
-        self.evernote = EvernoteClient(
-            config_data['key'],
-            config_data['secret'],
-            config_data['oauth_callback'],
-            sandbox=config['debug']
-        )
+        # self.evernote = EvernoteClient(
+        #     config_data['key'],
+        #     config_data['secret'],
+        #     config_data['oauth_callback'],
+        #     sandbox=config['debug']
+        # )
         self.evernote_api = AsyncEvernoteApi()
         self.cache = aiomcache.Client('127.0.0.1', 11211)
         for cmd_class in get_commands():
@@ -124,8 +132,7 @@ class EvernoteBot(TelegramBot):
 notes will be saved in <a href="{0}">this note</a>'.format(note_link)
             self.send_message(user.telegram_chat_id, message,
                               parse_mode='Html')
-            await NoteProvider().get_note(user.evernote_access_token,
-                                          note_guid)
+            await Evernote().get_note(user.evernote_access_token, note_guid)
 
     async def set_mode(self, user, mode):
         if mode.startswith('> ') and mode.endswith(' <'):
