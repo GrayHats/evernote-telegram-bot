@@ -97,6 +97,7 @@ class BotService:
         for filename in services:
             os.system('{file} status'.format(file=filename))
 
+    @cmd
     def set_webhook(self):
         from ext.telegram.api import BotApi
         telegram_api = BotApi(self.config['telegram']['token'])
@@ -131,6 +132,8 @@ if __name__ == "__main__":
         service.reload()
     elif cmd == 'status':
         service.status()
+    elif cmd == 'set_webhook':
+        service.set_webhook()
     else:
         print("Unknown command '{}'\n".format(cmd))
         sys.exit(1)
