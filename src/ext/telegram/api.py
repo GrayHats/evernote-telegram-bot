@@ -5,7 +5,7 @@ import aiohttp
 class BotApiError(Exception):
 
     def __init__(self, code, description):
-        super(BotApiError, self).__init__(description)
+        super().__init__(description)
         self.code = code
 
 
