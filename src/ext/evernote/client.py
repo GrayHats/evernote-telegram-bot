@@ -17,10 +17,10 @@ class Evernote:
         return await self.__api.get_note(token, guid)
 
     async def create_note(self, token, title, text,
-                          notebook_guid, files: List):
+                          notebook_guid, files: List, *, title_prefix=None):
         if text:
             title = ('%s...' % text[:15] if len(text) > 15 else text)
-        title = '[BOT] {0}'.format(title)
+        title = '{0} {1}'.format(title_prefix or '[BOT]', title)
         return await self.__api.new_note(token, notebook_guid, text,
                                          title, files)
 
@@ -32,22 +32,24 @@ class Evernote:
             self.logger.warning(
                 'Note {0} not found. Creating new note'.format(note_guid)
             )
-            note = await self.__api.new_note(token, notebook_guid, text,
-                                             '[TELEGRAM BOT]', files)
+            note_guid = await self.__api.new_note(token, notebook_guid, text,
+                                                  '[TELEGRAM BOT]', files)
+            note = await self.__api.get_note(token, note_guid)
         content = NoteContent(note)
         content.add_text(text)
         if files:
-            note = await self.__api.new_note(token, notebook_guid, text,
-                                             '[Files]', files)
+            # Separate note for files
+            note_guid = await self.__api.new_note(token, notebook_guid, '',
+                                                  '[Files]', files)
             user = await self.__api.get_user(token)
             note_url = 'https://{host}/shard/{shard}/nl/{uid}/{guid}/'.format(
                 host=await self.__api.get_service_host(token),
                 shard=user.shardId,
                 uid=user.id,
-                guid=note.guid
+                guid=note_guid
             )
             html = '{file_type}: <a href="{url}">{url}</a>'.format(
-                file_type=request_type.capitalize(),
+                file_type=request_type.capitalize() if request_type else 'File',
                 url=note_url
             )
             content.add_text(html)
