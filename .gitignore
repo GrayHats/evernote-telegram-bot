@@ -4,6 +4,7 @@ __pycache__
 *.sublime*
 src/config/dev.yaml
 src/config/live.yaml
+src/config/tests.yaml
 *.log
 *.pid
 *.bak

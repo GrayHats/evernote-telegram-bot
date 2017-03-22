@@ -13,7 +13,7 @@ class Evernote:
     def __init__(self, sandbox=False, *, title_prefix=None):
         self.__api = AsyncEvernoteApi(sandbox=sandbox)
         self.cache = aiomcache.Client('127.0.0.1', 11211)  # TODO:
-        self.title_prefix = title_prefix or '[TELEGRAM BOT]'
+        self.title_prefix = title_prefix or ''
         self.logger = logging.getLogger()
 
     async def get_note(self, token, guid):
@@ -62,3 +62,9 @@ class Evernote:
 
         note.content = str(content)
         await self.__api.update_note(token, note)
+
+    async def list_notebooks(self, token):
+        pass
+
+    async def get_note_link(self, token, note_guid):
+        pass

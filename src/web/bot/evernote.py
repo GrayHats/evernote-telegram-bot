@@ -79,7 +79,6 @@ def set_access_token(bot, user, future_access_token):
         bot.evernote_api.get_default_notebook(access_token)
     )
     future.add_done_callback(functools.partial(on_notebook_info, bot, user))
-    asyncio.ensure_future(bot.update_notebooks_cache(user))
 
 
 def on_notebook_info(bot, user, future_notebook):

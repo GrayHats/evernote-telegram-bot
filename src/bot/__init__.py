@@ -9,7 +9,6 @@ from os.path import dirname
 from os.path import join
 from os.path import basename
 
-import aiomcache
 import asyncio
 
 from config import config
@@ -18,7 +17,6 @@ from bot.model import TelegramUpdate
 from bot.model import DownloadTask
 from bot.model import StartSession
 from ext.botan_async import track
-from ext.evernote.api import AsyncEvernoteApi
 from ext.evernote.client import Evernote
 from ext.telegram.bot import TelegramBot
 from ext.telegram.bot import TelegramBotCommand
@@ -58,163 +56,145 @@ class EvernoteBot(TelegramBot):
 
     def __init__(self, token, name):
         super(EvernoteBot, self).__init__(token, name)
-        config_data = config['evernote']['basic_access']
-        # self.evernote = EvernoteClient(
-        #     config_data['key'],
-        #     config_data['secret'],
-        #     config_data['oauth_callback'],
-        #     sandbox=config['debug']
-        # )
-        self.evernote_api = AsyncEvernoteApi()
-        self.cache = aiomcache.Client('127.0.0.1', 11211)
+        self.evernote = Evernote(title_prefix='[TELEGRAM BOT]')
         for cmd_class in get_commands():
             self.add_command(cmd_class)
 
     def track(self, message: Message):
         asyncio.ensure_future(track(message.user.id, message.raw))
 
-    async def list_notebooks(self, user: User, query=None):
-        key = 'list_notebooks_{0}'.format(user.id).encode()
-        data = await self.cache.get(key)
-        if not data:
-            notebooks = await self.evernote_api.list_notebooks(
-                user.evernote_access_token
-            )
-            notebooks = [
-                {'guid': nb.guid, 'name': nb.name} for nb in notebooks
-            ]
-            await self.cache.set(key, json.dumps(notebooks).encode())
-        else:
-            notebooks = json.loads(data.decode())
-        filtered = []
-        for nb in notebooks:
-            filtered.extend([nb for k, v in query.items() if nb[k] == v])
-        return filtered
+    def __filter(entries, query):
+        if not query:
+            return entries
+        result = []
+        for entry in entries:
+            for k, v in query:
+                if entry[k] != v:
+                    return
+            result.append(entry)
+        return result
 
-    async def update_notebooks_cache(self, user):
-        key = 'list_notebooks_{0}'.format(user.id).encode()
-        access_token = user.evernote_access_token
-        notebooks = await self.evernote_api.list_notebooks(access_token)
+    async def list_notebooks(self, user: User, query=None):
+        token = user.evernote_access_token
+        notebooks = await self.evernote.list_notebooks(token)
         notebooks = [{'guid': nb.guid, 'name': nb.name} for nb in notebooks]
-        await self.cache.set(key, json.dumps(notebooks).encode())
+        return self.__filter(notebooks, query)
 
     async def set_current_notebook(self, user, notebook_name=None,
                                    notebook_guid=None):
-        all_notebooks = await self.list_notebooks(user, {
-            'guid': notebook_guid,
-            'name': notebook_name,
-        })
-        if not all_notebooks:
+        query = {}
+        if notebook_name is not None:
+            query['name'] = notebook_name
+        if notebook_guid is not None:
+            query['guid'] = notebook_guid
+        notebooks = await self.list_notebooks(user, query)
+        if not notebooks:
+            message = 'Notebook {name}, {guid} not found (user {uid})'.format(
+                name=notebook_name, guid=notebook_guid, uid=user.id
+            )
+            self.logger.warn(message)
             self.send_message(user.telegram_chat_id, 'Please, select notebook')
             return
-        notebook = all_notebooks[0]
+
+        notebook = notebooks[0]
         user.current_notebook = notebook
-        user.state = None
-        user.save()
         notebook_name = notebook_name or notebook['name']
         self.send_message(
             user.telegram_chat_id,
-            'From now your current notebook is: %s' % notebook_name,
+            'From now your current notebook is: {}'.format(notebook_name),
             {'hide_keyboard': True}
         )
         if user.mode == 'one_note':
-            note_guid = await self.evernote_api.new_note(
+            note_guid = await self.evernote.create_note(
                 user.evernote_access_token,
-                notebook_guid=notebook['guid'],
-                text='',
-                title='Note for Evernoterobot')
-            user.places[user.current_notebook['guid']] = note_guid
+                'Note for Evernoterobot',
+                '',
+                notebook['guid']
+            )
+            user.places[notebook['guid']] = note_guid
             user.save()
-            note_link = await self.evernote_api.get_note_link(
+            note_link = await self.evernote.get_note_link(
                 user.evernote_access_token, note_guid
             )
             message = 'You are in "One note" mode. From now all your \
 notes will be saved in <a href="{0}">this note</a>'.format(note_link)
             self.send_message(user.telegram_chat_id, message,
                               parse_mode='Html')
-            await Evernote().get_note(user.evernote_access_token, note_guid)
 
-    async def set_mode(self, user, mode):
-        if mode.startswith('> ') and mode.endswith(' <'):
-            mode = mode[2:-2]
+    async def set_mode(self, user, mode): # TODO:
         text_mode = '{0}'.format(mode)
         mode = mode.replace(' ', '_').lower()
-
-        if mode == 'one_note':
-            if user.settings.get('evernote_access', 'basic') == 'full':
-                user.mode = mode
-                reply = await self.api.sendMessage(user.telegram_chat_id,
-                                                   'Please wait')
-                notebook_guid = user.current_notebook['guid']
-                note_guid = await self.evernote_api.new_note(
-                    user.evernote_access_token,
-                    notebook_guid,
-                    text='',
-                    title='Note for Evernoterobot'
-                )
-                user.places[user.current_notebook['guid']] = note_guid
-
-                text = 'Bot switched to mode "{0}"'.format(text_mode)
-                asyncio.ensure_future(
-                    self.api.editMessageText(user.telegram_chat_id,
-                                             reply["message_id"], text)
-                )
-                text = 'New note was created in notebook "{0}"'.format(
-                    user.current_notebook['name']
-                )
-                self.send_message(
-                    user.telegram_chat_id,
-                    text,
-                    {'hide_keyboard': True}
-                )
-            else:
-                text = 'To enable "One note" mode you should allow to bot to \
-read and update your notes'
-                await self.api.sendMessage(user.telegram_chat_id, text,
-                                           json.dumps({'hide_keyboard': True}))
-                text = 'Please tap on button below to give access to bot.'
-                signin_button = {
-                    'text': 'Waiting for Evernote...',
-                    'url': self.url,
-                }
-                inline_keyboard = {'inline_keyboard': [[signin_button]]}
-                message_future = asyncio.ensure_future(
-                    self.api.sendMessage(user.telegram_chat_id,
-                                         text,
-                                         json.dumps(inline_keyboard))
-                )
-                config_data = config['evernote']['full_access']
-                session = StartSession.get({'id': user.id})
-                oauth_data = await self.evernote_api.get_oauth_data(
-                    user.id,
-                    config_data['key'],
-                    config_data['secret'],
-                    config_data['oauth_callback'],
-                    session.key
-                )
-                session.oauth_data = oauth_data
-                signin_button['text'] = 'Allow read and update notes to bot'
-                signin_button['url'] = oauth_data["oauth_url"]
-                await asyncio.wait([message_future])
-                msg = message_future.result()
-                asyncio.ensure_future(
-                    self.api.editMessageReplyMarkup(
-                        user.telegram_chat_id,
-                        msg['message_id'],
-                        json.dumps(inline_keyboard)
-                    )
-                )
-                session.save()
-        else:
+        chat_id = user.telegram_chat_id
+        # TODO: check user.mode == mode
+        if mode != 'one_note':
             user.mode = mode
             self.send_message(
-                user.telegram_chat_id,
+                chat_id,
                 'From now this bot in mode "{0}"'.format(text_mode),
                 {'hide_keyboard': True}
             )
+            return
+        # 'one_note' mode required full permissions
+        if user.settings.get('evernote_access', 'basic') != 'full':
+            await self.request_full_permissions(user)
+            return
 
-        user.state = None
-        user.save()
+        user.mode = mode
+        reply = await self.send_message(chat_id, 'Please wait')
+        note_guid = await self.evernote.create_note(
+            user.evernote_access_token,
+            'Note for Evernoterobot',
+            '',
+            user.current_notebook['guid']
+        )
+        user.places[user.current_notebook['guid']] = note_guid
+
+        text = 'Bot switched to mode "{0}"'.format(text_mode)
+        asyncio.ensure_future(
+            self.api.editMessageText(chat_id, reply['message_id'], text)
+        )
+        text = 'New note was created in notebook "{0}"'.format(
+            user.current_notebook['name']
+        )
+        self.send_message(chat_id, text, {'hide_keyboard': True})
+
+    async def request_full_permissions(self, user):
+        chat_id = user.telegram_chat_id
+        text = 'To enable "One note" mode you should allow to bot to \
+read and update your notes'
+        res = self.send_message(chat_id, text,
+                                json.dumps({'hide_keyboard': True}))
+        await asyncio.wait(res)
+        text = 'Please tap on button below to give access to bot.'
+        signin_button = {
+            'text': 'Waiting for Evernote...',
+            'url': self.url,
+        }
+        inline_keyboard = {'inline_keyboard': [[signin_button]]}
+        message_future = self.send_message(chat_id, text,
+                                           json.dumps(inline_keyboard))
+        config_data = config['evernote']['full_access']
+        session = StartSession.get({'id': user.id})
+        oauth_data = await self.evernote_api.get_oauth_data(
+            user.id,
+            config_data['key'],
+            config_data['secret'],
+            config_data['oauth_callback'],
+            session.key
+        )
+        session.oauth_data = oauth_data
+        signin_button['text'] = 'Allow read and update notes to bot'
+        signin_button['url'] = oauth_data['oauth_url']
+        await asyncio.wait([message_future])
+        msg = message_future.result()
+        asyncio.ensure_future(
+            self.api.editMessageReplyMarkup(
+                chat_id,
+                msg['message_id'],
+                json.dumps(inline_keyboard)
+            )
+        )
+        session.save()
 
     def accept_request(self, user: User, request_type: str, message: Message):
         def on_message_sent(future_message):
@@ -272,8 +252,14 @@ command.'
             if text.startswith('> ') and text.endswith(' <'):
                 text = text[2:-2]
             await self.set_current_notebook(user, text)
+            user.state = None
+            user.save()
         elif user.state == 'switch_mode':
+            if text.startswith('> ') and text.endswith(' <'):
+                text = text[2:-2]
             await self.set_mode(user, text)
+            user.state = None
+            user.save()
         else:
             self.accept_request(user, 'text', message)
 

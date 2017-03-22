@@ -31,4 +31,3 @@ class NotebookCommand(TelegramBotCommand):
         )
         user.state = 'select_notebook'
         user.save()
-        asyncio.ensure_future(self.bot.update_notebooks_cache(user))
