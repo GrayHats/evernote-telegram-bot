@@ -44,13 +44,8 @@ Please, send /start command to create new session'
                 settings={'evernote_access': 'basic'})
     try:
         future = asyncio.ensure_future(
-            bot.evernote.get_access_token(
-                config_data['key'],
-                config_data['secret'],
-                session.oauth_data['oauth_token'],
-                session.oauth_data['oauth_token_secret'],
-                params['oauth_verifier'][0]
-            )
+            bot.evernote.get_access_token(config_data, session.oauth_data,
+                                          params['oauth_verifier'][0])
         )
         future.add_done_callback(
             functools.partial(set_access_token, bot, user)
