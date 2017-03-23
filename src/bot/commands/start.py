@@ -31,10 +31,8 @@ Please tap on button below to link your Evernote account with bot.'''
         inline_keyboard = {'inline_keyboard': [[signin_button]]}
         welcome_message_future = self.bot.send_message(chat_id, welcome_text,
                                                        inline_keyboard)
-        oauth_data = await self.bot.evernote_api.get_oauth_data(
-            user_id, config['key'], config['secret'],
-            config['oauth_callback'], session_key
-        )
+        oauth_data = await self.bot.evernote.get_oauth_data(user_id, config,
+                                                            session_key)
         session_data = {
             'user': {
                 'username': message.user.username,

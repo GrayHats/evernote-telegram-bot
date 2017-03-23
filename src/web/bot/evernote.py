@@ -44,7 +44,7 @@ Please, send /start command to create new session'
                 settings={'evernote_access': 'basic'})
     try:
         future = asyncio.ensure_future(
-            bot.evernote_api.get_access_token(
+            bot.evernote.get_access_token(
                 config_data['key'],
                 config_data['secret'],
                 session.oauth_data['oauth_token'],
@@ -76,7 +76,7 @@ def set_access_token(bot, user, future_access_token):
     user.evernote_access_token = access_token
     user.save()
     future = asyncio.ensure_future(
-        bot.evernote_api.get_default_notebook(access_token)
+        bot.evernote.get_default_notebook(access_token)
     )
     future.add_done_callback(functools.partial(on_notebook_info, bot, user))
 
@@ -124,12 +124,8 @@ new session'
         oauth_verifier = params['oauth_verifier'][0]
         config_data = config['evernote']['full_access']
         future = asyncio.ensure_future(
-            bot.evernote_api.get_access_token(
-                config_data['key'],
-                config_data['secret'],
-                session.oauth_data['oauth_token'],
-                session.oauth_data['oauth_token_secret'],
-                oauth_verifier)
+            bot.evernote.get_access_token(config_data, session.oauth_data,
+                                          oauth_verifier)
         )
         future.add_done_callback(
             functools.partial(switch_to_one_note_mode, bot, user.id)
@@ -160,10 +156,12 @@ def switch_to_one_note_mode(bot, user_id, access_token_future):
     user.mode = 'one_note'
     user.save()
     future = asyncio.ensure_future(
-        bot.evernote_api.new_note(user.evernote_access_token,
-                                  user.current_notebook['guid'],
-                                  text='',
-                                  title='Note for Evernoterobot')
+        bot.evernote.create_note(
+            user.evernote_access_token,
+            'Note for Evernoterobot',
+            '',
+            user.current_notebook['guid']
+        )
     )
     future.add_done_callback(
         functools.partial(save_default_note_guid, user_id)

@@ -81,3 +81,21 @@ class Evernote:
 
     async def get_note_link(self, token, note_guid):
         return await self.__api.get_note_link(token, note_guid)
+
+    async def get_access_token(self, config, oauth_data, oauth_verifier):
+        return await self.__api.get_access_token(
+            config['key'],
+            config['secret'],
+            oauth_data['oauth_token'],
+            oauth_data['oauth_token_secret'],
+            oauth_verifier
+        )
+
+    async def get_default_notebook(self, token):
+        return await self.__api.get_default_notebook(token)
+
+    async def get_oauth_data(self, user_id, config, session_key):
+        return await self.__api.get_oauth_data(
+            user_id, config['key'], config['secret'], config['oauth_callback'],
+            session_key
+        )

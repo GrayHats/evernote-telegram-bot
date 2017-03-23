@@ -157,13 +157,8 @@ read and update your notes'
                                            json.dumps(inline_keyboard))
         config_data = config['evernote']['full_access']
         session = StartSession.get({'id': user.id})
-        oauth_data = await self.evernote_api.get_oauth_data(
-            user.id,
-            config_data['key'],
-            config_data['secret'],
-            config_data['oauth_callback'],
-            session.key
-        )
+        oauth_data = await self.evernote.get_oauth_data(user.id, config_data,
+                                                        session.key)
         session.oauth_data = oauth_data
         signin_button['text'] = 'Allow read and update notes to bot'
         signin_button['url'] = oauth_data['oauth_url']
