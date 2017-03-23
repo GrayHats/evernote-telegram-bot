@@ -24,7 +24,7 @@ class BaseHandler:
         else:
             raise Exception('Invalid user mode {0}'.format(user.mode))
 
-    async def get_files(message: Message):
+    async def get_files(self, message: Message):
         return []
 
     async def get_text(self, message: Message):
