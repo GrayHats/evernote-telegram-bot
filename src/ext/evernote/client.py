@@ -25,7 +25,7 @@ class Evernote:
         Returns GUID for new note
         '''
         if text:
-            title = ('%s...' % text[:15] if len(text) > 15 else text)
+            title = '%s...' % text[:15] if len(text) > 15 else text
         title = '{0} {1}'.format(self.title_prefix, title)
         return await self.__api.new_note(token, notebook_guid, text,
                                          title, files)
