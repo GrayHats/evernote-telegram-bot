@@ -106,23 +106,23 @@ class AsyncMock(Mock):
         return super().__call__(*args, **kwargs)
 
 
-@pytest.fixture
-def testbot():
-    bot = EvernoteBot(config['telegram']['token'], 'test_bot')
-    bot.track = Mock()
-    bot.api = AsyncMock()
-    bot.api.sendMessage = AsyncMock(return_value={'message_id': 1})
-    bot.evernote_api = AsyncMock()
-    bot.evernote_api.get_oauth_data = AsyncMock(
-        return_value={'oauth_url': 'test_oauth_url'}
-    )
-    bot.evernote_api.list_notebooks = AsyncMock(
-        return_value=[Model(guid='1', name='test_notebook')]
-    )
-    bot.cache.get = AsyncMock(return_value=None)
-    bot.cache.set = AsyncMock()
-    bot.update_notebooks_cache = AsyncMock()
-    return bot
+# @pytest.fixture
+# def testbot():
+#     bot = EvernoteBot(config['telegram']['token'], 'test_bot')
+#     bot.track = Mock()
+#     bot.api = AsyncMock()
+#     bot.api.sendMessage = AsyncMock(return_value={'message_id': 1})
+#     bot.evernote_api = AsyncMock()
+#     bot.evernote_api.get_oauth_data = AsyncMock(
+#         return_value={'oauth_url': 'test_oauth_url'}
+#     )
+#     bot.evernote_api.list_notebooks = AsyncMock(
+#         return_value=[Model(guid='1', name='test_notebook')]
+#     )
+#     bot.cache.get = AsyncMock(return_value=None)
+#     bot.cache.set = AsyncMock()
+#     bot.update_notebooks_cache = AsyncMock()
+#     return bot
 
 
 def delete_cached_files(root_dir):

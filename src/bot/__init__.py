@@ -63,23 +63,6 @@ class EvernoteBot(TelegramBot):
     def track(self, message: Message):
         asyncio.ensure_future(track(message.user.id, message.raw))
 
-    def __filter(entries, query):
-        if not query:
-            return entries
-        result = []
-        for entry in entries:
-            for k, v in query:
-                if entry[k] != v:
-                    return
-            result.append(entry)
-        return result
-
-    async def list_notebooks(self, user: User, query=None):
-        token = user.evernote_access_token
-        notebooks = await self.evernote.list_notebooks(token)
-        notebooks = [{'guid': nb.guid, 'name': nb.name} for nb in notebooks]
-        return self.__filter(notebooks, query)
-
     async def set_current_notebook(self, user, notebook_name=None,
                                    notebook_guid=None):
         query = {}
@@ -87,7 +70,7 @@ class EvernoteBot(TelegramBot):
             query['name'] = notebook_name
         if notebook_guid is not None:
             query['guid'] = notebook_guid
-        notebooks = await self.list_notebooks(user, query)
+        notebooks = await self.evernote.list_notebooks(user, query)
         if not notebooks:
             message = 'Notebook {name}, {guid} not found (user {uid})'.format(
                 name=notebook_name, guid=notebook_guid, uid=user.id
@@ -162,8 +145,7 @@ notes will be saved in <a href="{0}">this note</a>'.format(note_link)
         chat_id = user.telegram_chat_id
         text = 'To enable "One note" mode you should allow to bot to \
 read and update your notes'
-        res = self.send_message(chat_id, text,
-                                json.dumps({'hide_keyboard': True}))
+        res = self.send_message(chat_id, text, {'hide_keyboard': True})
         await asyncio.wait(res)
         text = 'Please tap on button below to give access to bot.'
         signin_button = {
@@ -218,32 +200,29 @@ read and update your notes'
         user_id = message.user.id
         if '/start' in message.bot_commands:
             return
-        if User.count({'id': user_id}) > 0:
-            user = User.get({'id': user_id})
-            if not hasattr(user, 'evernote_access_token') or \
-               not user.evernote_access_token:
-                await self.api.sendMessage(
-                    user.telegram_chat_id,
-                    'You should authorize first. Please, send /start command.'
-                )
-                raise TelegramBotError(
-                    'User {0} not authorized in Evernote'.format(user.id)
-                )
-            user.last_request_time = datetime.datetime.now()
-            user.save()
-        else:
+
+        if User.count({'id': user_id}) == 0:
             if StartSession.count({'id': user_id}) > 0:
-                message_text = 'Please, sign in to Evernote account first: \
-/start'
-                error_text = 'User {0} not authorized in Evernote'.format(
-                    user_id
-                )
+                message_text = 'Please, sign in to Evernote account first: /start'
+                error_text = 'User {0} not authorized in Evernote'.format(user_id)
             else:
-                message_text = 'Who are you, stranger? Please, send /start \
-command.'
+                message_text = 'Who are you, stranger? Please, send /start command.'
                 error_text = 'Unregistered user {0}'.format(user_id)
-                self.send_message(message.chat.id, message_text)
+            self.send_message(message.chat.id, message_text)
             raise TelegramBotError(error_text)
+
+        user = User.get({'id': user_id})
+        if not hasattr(user, 'evernote_access_token') or \
+           not user.evernote_access_token:
+            self.send_message(
+                user.telegram_chat_id,
+                'You should authorize first. Please, send /start command.'
+            )
+            raise TelegramBotError(
+                'User {0} not authorized in Evernote'.format(user.id)
+            )
+        user.last_request_time = datetime.datetime.now()
+        user.save()
 
     async def on_text(self, message: Message):
         user = User.get({'id': message.user.id})

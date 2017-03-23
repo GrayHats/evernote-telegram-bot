@@ -196,8 +196,8 @@ class AsyncEvernoteApi:
 
     async def get_note_link(self, auth_token, note_guid, app_link=False):
         user = await self.get_user(auth_token)
-        app_link_template = 'evernote:///view/%(user_id)s/%(shard)s/%(note_guid)s/%(note_guid)s/'
-        web_link_template = 'https://%(service)s/shard/%(shard)s/nl/%(user_id)s/%(note_guid)s/'
+        app_link_template = 'evernote:///view/{user_id}/{shard}/{note_guid}/{note_guid}/'
+        web_link_template = 'https://{service}/shard/{shard}/nl/{user_id}/{note_guid}/'
         params = {
             'service': await self.get_service_host(auth_token),
             'shard': user.shardId,
@@ -205,8 +205,8 @@ class AsyncEvernoteApi:
             'note_guid': note_guid,
         }
         if app_link:
-            return app_link_template % params
-        return web_link_template % params
+            return app_link_template.format(**params)
+        return web_link_template.format(**params)
 
     async def get_note(self, auth_token, note_guid):
         def fetch(note_guid):

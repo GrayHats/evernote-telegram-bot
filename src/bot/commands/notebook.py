@@ -12,7 +12,7 @@ class NotebookCommand(TelegramBotCommand):
     async def execute(self, message: Message):
         self.bot.track(message)
         user = User.get({'id': message.user.id})
-        notebooks = await self.bot.list_notebooks(user)
+        notebooks = await self.bot.evernote.list_notebooks(user)
         buttons = []
         for notebook in notebooks:
             if notebook['guid'] == user.current_notebook['guid']:

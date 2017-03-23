@@ -63,8 +63,21 @@ class Evernote:
         note.content = str(content)
         await self.__api.update_note(token, note)
 
-    async def list_notebooks(self, token):
-        pass
+    def __filter(entries, query):
+        if not query:
+            return entries
+        result = []
+        for entry in entries:
+            for k, v in query:
+                if entry[k] != v:
+                    return
+            result.append(entry)
+        return result
+
+    async def list_notebooks(self, token, query=None):
+        notebooks = await self.__api.list_notebooks(token)
+        notebooks = [{'guid': nb.guid, 'name': nb.name} for nb in notebooks]
+        return self.__filter(notebooks, query)
 
     async def get_note_link(self, token, note_guid):
-        pass
+        return await self.__api.get_note_link(token, note_guid)
