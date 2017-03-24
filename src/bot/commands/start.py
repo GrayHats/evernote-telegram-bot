@@ -4,6 +4,7 @@ import asyncio
 import random
 import string
 
+from config import config
 from bot.model import StartSession
 from ext.telegram.bot import TelegramBotCommand
 from ext.telegram.models import Message
@@ -17,7 +18,6 @@ class StartCommand(TelegramBotCommand):
         chat_id = message.chat.id
         user_id = message.user.id
         self.bot.track(message)
-        config = self.bot.config['evernote']['basic_access']
         session_key = ''.join(
             [random.choice(string.ascii_letters + string.digits)
              for i in range(32)]
@@ -31,8 +31,9 @@ Please tap on button below to link your Evernote account with bot.'''
         inline_keyboard = {'inline_keyboard': [[signin_button]]}
         welcome_message_future = self.bot.send_message(chat_id, welcome_text,
                                                        inline_keyboard)
-        oauth_data = await self.bot.evernote.get_oauth_data(user_id, config,
-                                                            session_key)
+        oauth_data = await self.bot.evernote.get_oauth_data(
+            user_id, config['evernote']['basic_access'], session_key
+        )
         session_data = {
             'user': {
                 'username': message.user.username,

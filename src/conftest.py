@@ -8,11 +8,17 @@ import asyncio
 from unittest.mock import Mock
 import importlib
 import shutil
+import random
+import string
+import datetime
 
 import pytest
 
 from bot import EvernoteBot
+from bot import User
 from bot.model import Model
+from ext.telegram.models import TelegramUpdate
+
 
 sys.path.insert(0, realpath(dirname(dirname(__file__))))
 config = importlib.import_module('config').config
@@ -106,23 +112,55 @@ class AsyncMock(Mock):
         return super().__call__(*args, **kwargs)
 
 
-# @pytest.fixture
-# def testbot():
-#     bot = EvernoteBot(config['telegram']['token'], 'test_bot')
-#     bot.track = Mock()
-#     bot.api = AsyncMock()
-#     bot.api.sendMessage = AsyncMock(return_value={'message_id': 1})
-#     bot.evernote_api = AsyncMock()
-#     bot.evernote_api.get_oauth_data = AsyncMock(
-#         return_value={'oauth_url': 'test_oauth_url'}
-#     )
-#     bot.evernote_api.list_notebooks = AsyncMock(
-#         return_value=[Model(guid='1', name='test_notebook')]
-#     )
-#     bot.cache.get = AsyncMock(return_value=None)
-#     bot.cache.set = AsyncMock()
-#     bot.update_notebooks_cache = AsyncMock()
-#     return bot
+def generate_string(length):
+    symbols = [random.choice(string.ascii_letters) for x in range(1, length)]
+    return ''.join(symbols)
+
+
+@pytest.fixture
+def user():
+    note_guid = generate_string(32)
+    notebook_guid = generate_string(32)
+    user = User.create(
+        id=random.randint(1, 100),
+        name=generate_string(5),
+        username=generate_string(5),
+        telegram_chat_id=random.randint(1, 100),
+        mode='one_note',
+        evernote_access_token='token',
+        current_notebook={'guid': notebook_guid, 'name': 'test_notebook'},
+        places={notebook_guid: note_guid}
+    )
+    return user
+
+
+@pytest.fixture
+def text_update(user):
+    return TelegramUpdate({
+        'update_id': 213,
+        'message': {
+            'message_id': 1,
+            'date': datetime.datetime.now(),
+            'from': {'id': user.id, 'username': 'test'},
+            'chat': {'id': user.telegram_chat_id, 'type': 'private'},
+            'text': 'test text'},
+    })
+
+
+@pytest.fixture
+def testbot():
+    bot = EvernoteBot(config['telegram']['token'], 'test_bot')
+    bot.track = Mock()
+    bot.api = AsyncMock()
+    bot.api.sendMessage = AsyncMock(return_value={'message_id': 1})
+    bot.evernote = AsyncMock()
+    bot.evernote.get_oauth_data = AsyncMock(
+        return_value={'oauth_url': 'test_oauth_url'}
+    )
+    bot.evernote.list_notebooks = AsyncMock(
+        return_value=[{'guid': '1', 'name': 'test_notebook'}]
+    )
+    return bot
 
 
 def delete_cached_files(root_dir):
