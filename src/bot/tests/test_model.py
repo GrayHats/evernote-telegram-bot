@@ -23,5 +23,5 @@ def test_model():
     assert new_t.name == 'new'
     assert new_t.value == 'val'
 
-    t = TestModel.get({ 'name': 'new' })
+    t = TestModel.get({'name': 'new'})
     assert t.value == 'val'

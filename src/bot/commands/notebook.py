@@ -1,5 +1,3 @@
-import asyncio
-
 from bot import User
 from ext.telegram.bot import TelegramBotCommand
 from ext.telegram.models import Message
@@ -16,7 +14,7 @@ class NotebookCommand(TelegramBotCommand):
         buttons = []
         for notebook in notebooks:
             if notebook['guid'] == user.current_notebook['guid']:
-                name = "> %s <" % notebook['name']
+                name = '> {} <'.format(notebook['name'])
             else:
                 name = notebook['name']
             buttons.append({'text': name})

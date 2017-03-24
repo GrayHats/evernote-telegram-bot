@@ -1,4 +1,5 @@
-from bot.util import dict_get, dict_set
+from bot.util import dict_get
+from bot.util import dict_set
 
 
 def test_dict_get():

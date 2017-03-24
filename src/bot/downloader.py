@@ -16,7 +16,7 @@ class TelegramDownloader(HttpDownloader):
 
     def __init__(self, bot_token, download_dir=None, *, loop=None):
         logger = logging.getLogger('downloader')
-        super().__init__(self, download_dir, logger=logger, loop=loop)
+        super().__init__(download_dir, logger=logger, loop=loop)
         self._telegram_api = BotApi(bot_token)
         self.tasks = []
 
@@ -33,10 +33,13 @@ class TelegramDownloader(HttpDownloader):
             except Exception as e:
                 self.logger.error(e, exc_info=1)
 
+    async def get_download_url(self, file_id):
+        return await self._telegram_api.getFile(file_id)
+
     async def handle_download_task(self, task):
         try:
             file_id = task.file_id
-            download_url = await self._telegram_api.getFile(file_id)
+            download_url = await self.get_download_url(file_id)
             destination_file = os.path.join(self.download_dir, file_id)
             response = await self.async_download_file(download_url,
                                                       destination_file)

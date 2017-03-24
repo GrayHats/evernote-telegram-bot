@@ -2,12 +2,17 @@ import asyncio
 import logging
 import os
 import traceback
+import time
 
+from config import config
 from bot.model import DownloadTask
 from bot.model import TelegramUpdate
+from bot.model import FailedUpdate
 from bot.model import User
 from ext.telegram.models import Message
 from ext.evernote.client import Evernote
+from ext.evernote.api import TokenExpired
+from ext.telegram.api import BotApi
 
 
 class BaseHandler:
@@ -15,14 +20,39 @@ class BaseHandler:
     def __init__(self):
         self.logger = logging.getLogger()
         self.evernote = Evernote()
+        self.telegram = BotApi(config['telegram']['token'])
 
     async def execute(self, user: User, update: TelegramUpdate):
-        if user.mode == 'one_note':
-            await self._update_note(user, update)
-        elif user.mode == 'multiple_notes':
-            await self._create_note(user, update)
-        else:
-            raise Exception('Invalid user mode {0}'.format(user.mode))
+        try:
+            start_ts = time.time()
+            if user.mode == 'one_note':
+                await self._update_note(user, update)
+            elif user.mode == 'multiple_notes':
+                await self._create_note(user, update)
+            else:
+                raise Exception('Invalid user mode {0}'.format(user.mode))
+            text = '✅ {0} saved ({1:.2} s)'.format(
+                update.request_type.capitalize(),
+                time.time() - start_ts
+            )
+            self.update_status_message(user, update, text)
+        except TokenExpired:
+            text = '⛔️ Evernote access token is expired. \
+Send /start to get new token'
+            self.update_status_message(user, update, text)
+        except Exception as e:
+            self.logger.error(e, exc_info=1)
+            FailedUpdate.create(error=traceback.format_exc(),
+                                **update.save_data())
+            text = '❌ Something went wrong. Please, try again'
+            self.update_status_message(user, update, text)
+
+    def update_status_message(self, user, update, text):
+        return asyncio.ensure_future(
+            self.telegram.editMessageText(
+                user.telegram_chat_id, update.status_message_id, text
+            )
+        )
 
     async def get_files(self, message: Message):
         return []
@@ -55,7 +85,6 @@ class BaseHandler:
         message = Message(update.message)
         text = await self.get_text(message)
         files = await self.get_files(message)
-
         await self.evernote.update_note(
             user.evernote_access_token,
             note_guid,
