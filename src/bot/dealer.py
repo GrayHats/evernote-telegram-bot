@@ -1,7 +1,7 @@
 import asyncio
-import logging
 import time
 
+from utils.logs import get_logger
 from bot.message_handlers import TextHandler
 from bot.message_handlers import PhotoHandler
 from bot.message_handlers import VideoHandler
@@ -20,7 +20,7 @@ class EvernoteDealer:
 
     def __init__(self, loop=None):
         self.__loop = loop or asyncio.get_event_loop()
-        self.logger = logging.getLogger('dealer')
+        self.logger = get_logger('dealer')
         self.handlers = {
             'text': [TextHandler()],
             'photo': [PhotoHandler()],

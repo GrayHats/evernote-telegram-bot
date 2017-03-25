@@ -1,10 +1,10 @@
 import asyncio
-import logging
 import os
 import traceback
 import time
 
 from config import config
+from utils.logs import get_logger
 from bot.model import DownloadTask
 from bot.model import TelegramUpdate
 from bot.model import FailedUpdate
@@ -18,7 +18,7 @@ from ext.telegram.api import BotApi
 class BaseHandler:
 
     def __init__(self):
-        self.logger = logging.getLogger()
+        self.logger = get_logger('bot')
         self.evernote = Evernote()
         self.telegram = BotApi(config['telegram']['token'])
 

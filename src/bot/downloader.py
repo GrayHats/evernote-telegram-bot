@@ -1,7 +1,7 @@
 import asyncio
-import logging
 import os
 
+from utils.logs import get_logger
 from utils.downloader import HttpDownloader
 from utils.downloader import DownloadError
 from bot import DownloadTask
@@ -15,7 +15,7 @@ class TelegramDownloader(HttpDownloader):
     '''
 
     def __init__(self, bot_token, download_dir=None, *, loop=None):
-        logger = logging.getLogger('downloader')
+        logger = get_logger('downloader')
         super().__init__(download_dir, logger=logger, loop=loop)
         self._telegram_api = BotApi(bot_token)
         self.tasks = []

@@ -1,7 +1,10 @@
 import logging
+import logging.config
 import smtplib
 from os.path import join
 from logging.handlers import SMTPHandler
+
+from config import config
 
 
 class SslSMTPHandler(SMTPHandler):
@@ -124,3 +127,12 @@ def get_config(project_name, logs_dir, smtp_settings):
                 'secure': (),
         }
     return config
+
+
+def get_logger(name=''):
+    logging.config.dictConfig(get_config(
+        project_name=config['project_name'],
+        logs_dir=config['logs_dir'],
+        smtp_settings=config.get('smtp')
+    ))
+    return logging.getLogger(name)
