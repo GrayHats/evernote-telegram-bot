@@ -68,7 +68,7 @@ class Evernote:
             return entries
         result = []
         for entry in entries:
-            for k, v in query:
+            for k, v in query.items():
                 if entry[k] != v:
                     return
             result.append(entry)
