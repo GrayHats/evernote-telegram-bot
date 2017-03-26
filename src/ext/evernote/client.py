@@ -63,7 +63,7 @@ class Evernote:
         note.content = str(content)
         await self.__api.update_note(token, note)
 
-    def __filter(entries, query):
+    def __filter(self, entries, query):
         if not query:
             return entries
         result = []
