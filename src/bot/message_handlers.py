@@ -19,7 +19,7 @@ class BaseHandler:
 
     def __init__(self):
         self.logger = get_logger('bot')
-        self.evernote = Evernote()
+        self.evernote = Evernote(title_prefix='[TELEGRAM BOT]')
         self.telegram = BotApi(config['telegram']['token'])
 
     async def execute(self, user: User, update: TelegramUpdate):
