@@ -240,6 +240,11 @@ class AsyncEvernoteApi:
                     content.add_file(path, mime_type)
             note.resources = content.get_resources()
             note.content = str(content)
+            self.logger.debug(
+                'Creating note... (title = {0}, content = {1}'.format(
+                    note.title, note.content
+                )
+            )
             return self.__call_store_method('createNote', auth_token, note)
 
         note = await self.loop.run_in_executor(self.executor, create)

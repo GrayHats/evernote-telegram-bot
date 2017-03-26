@@ -55,6 +55,8 @@ class SslSMTPHandler(SMTPHandler):
 def get_config(project_name, logs_dir, smtp_settings):
 
     def file_handler(filename, log_level='DEBUG'):
+        if config.get('debug'):
+            log_level = 'DEBUG'
         return {
                 'level': log_level,
                 'class': 'logging.FileHandler',
@@ -63,13 +65,17 @@ def get_config(project_name, logs_dir, smtp_settings):
         }
 
     def logger(level='INFO', handlers=None, propagate=False):
+        if config.get('debug'):
+            level = 'DEBUG'
         return {
             'level': level,
             'handlers': handlers or [],
             'propagate': propagate,
         }
 
-    config = {
+    if config.get('debug'):
+        log_level = 'DEBUG'
+    config_data = {
         'version': 1,
         'disable_existing_loggers': False,
 
@@ -91,7 +97,7 @@ def get_config(project_name, logs_dir, smtp_settings):
             'file': file_handler('%s.log' % project_name),
             'evernote_api_file': file_handler('evernote.log'),
             'telegram_api_file': file_handler('telegram.log'),
-            'dealer_file': file_handler('dealer.log', 'INFO'),
+            'dealer_file': file_handler('dealer.log', log_level or 'INFO'),
             'downloader_file': file_handler('downloader.log'),
             'email': file_handler('email.log', 'ERROR'),
         },
@@ -102,18 +108,21 @@ def get_config(project_name, logs_dir, smtp_settings):
             'gunicorn.access': logger(handlers=['accessfile']),
             'gunicorn.error': logger(handlers=['file', 'email']),
             # APIs
-            'evernote_api': logger('ERROR', ['evernote_api_file', 'email']),
-            'telegram_api': logger('ERROR', ['telegram_api_file', 'email']),
+            'evernote_api': logger(log_level or 'ERROR',
+                                   ['evernote_api_file', 'email']),
+            'telegram_api': logger(log_level or 'ERROR',
+                                   ['telegram_api_file', 'email']),
             # daemons
-            'dealer': logger('ERROR', ['dealer_file', 'email']),
-            'downloader': logger('ERROR', ['downloader_file', 'email']),
+            'dealer': logger(log_level or 'ERROR', ['dealer_file', 'email']),
+            'downloader': logger(log_level or 'ERROR',
+                                 ['downloader_file', 'email']),
             # bot
-            'bot': logger('WARNING', ['file', 'email']),
-            '': logger('ERROR', ['file', 'email'], True),
+            'bot': logger(log_level or 'WARNING', ['file', 'email']),
+            '': logger(log_level or 'ERROR', ['file', 'email'], True),
         },
     }
     if smtp_settings:
-        config['handlers']['email'] = {
+        config_data['handlers']['email'] = {
                 'level': 'ERROR',
                 'class': 'utils.logs.SslSMTPHandler',
                 'mailhost': (smtp_settings['host'], smtp_settings['port']),
@@ -126,7 +135,7 @@ def get_config(project_name, logs_dir, smtp_settings):
                 ),
                 'secure': (),
         }
-    return config
+    return config_data
 
 
 def get_logger(name=''):
