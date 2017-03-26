@@ -70,7 +70,9 @@ class EvernoteBot(TelegramBot):
             query['name'] = notebook_name
         if notebook_guid is not None:
             query['guid'] = notebook_guid
-        notebooks = await self.evernote.list_notebooks(user, query)
+        notebooks = await self.evernote.list_notebooks(
+            user.evernote_access_token, query
+        )
         if not notebooks:
             message = 'Notebook {name}, {guid} not found (user {uid})'.format(
                 name=notebook_name, guid=notebook_guid, uid=user.id
