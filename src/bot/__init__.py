@@ -155,8 +155,7 @@ read and update your notes'
             'url': self.url,
         }
         inline_keyboard = {'inline_keyboard': [[signin_button]]}
-        message_future = self.send_message(chat_id, text,
-                                           json.dumps(inline_keyboard))
+        message_future = self.send_message(chat_id, text, inline_keyboard)
         config_data = config['evernote']['full_access']
         session = StartSession.get({'id': user.id})
         oauth_data = await self.evernote.get_oauth_data(user.id, config_data,
