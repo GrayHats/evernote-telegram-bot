@@ -28,7 +28,8 @@ if __name__ == '__main__':
         cmd = args.CMD
 
         pidfile = join(config['project_dir'], 'dealer.pid')
-        daemon = EvernoteDealerDaemon(pidfile)
+        stdout = join(config['project_dir'], 'dealer.stdout.log')
+        daemon = EvernoteDealerDaemon(pidfile, stdout)
         if cmd == 'start':
             daemon.start()
         elif cmd == 'stop':

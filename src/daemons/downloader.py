@@ -15,8 +15,9 @@ from config import config
 
 class TelegramDownloaderDaemon(Daemon):
 
-    def __init__(self, telegram_token, pidfile, download_dir=None):
-        super().__init__(pidfile)
+    def __init__(self, telegram_token, pidfile, stdout_file,
+                 download_dir=None):
+        super().__init__(pidfile, stdout_file)
         self.download_dir = download_dir
         self.token = telegram_token
 
@@ -35,6 +36,7 @@ if __name__ == '__main__':
         daemon = TelegramDownloaderDaemon(
             config['telegram']['token'],
             join(config['project_dir'], 'downloader.pid'),
+            join(config['project_dir'], 'downloader.stdout.log'),
             config['downloads_dir']
         )
         if cmd == 'start':
