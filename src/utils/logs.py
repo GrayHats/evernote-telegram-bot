@@ -73,6 +73,7 @@ def get_config(project_name, logs_dir, smtp_settings):
             'propagate': propagate,
         }
 
+    log_level = None
     if config.get('debug'):
         log_level = 'DEBUG'
     config_data = {
