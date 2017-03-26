@@ -92,3 +92,4 @@ async def test_switch_notebook(user):
     assert bot.api.sendMessage.call_args[0][1].startswith(
         'From now your current notebook is: test_nb'
     )
+    # TODO: check that in one_note mode new note was created

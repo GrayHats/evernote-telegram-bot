@@ -148,7 +148,7 @@ notes will be saved in <a href="{0}">this note</a>'.format(note_link)
         text = 'To enable "One note" mode you should allow to bot to \
 read and update your notes'
         res = self.send_message(chat_id, text, {'hide_keyboard': True})
-        await asyncio.wait(res)
+        await asyncio.wait([res])
         text = 'Please tap on button below to give access to bot.'
         signin_button = {
             'text': 'Waiting for Evernote...',
