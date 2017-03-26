@@ -183,10 +183,16 @@ class AsyncEvernoteApi:
 
     async def get_user(self, auth_token):
         def get_info(auth_token):
-            sdk = EvernoteSdk(token=auth_token, sandbox=self.sandbox)
-            user_store = sdk.get_user_store()
-            user = user_store.getUser(auth_token)
-            return user
+            try:
+                sdk = EvernoteSdk(token=auth_token, sandbox=self.sandbox)
+                user_store = sdk.get_user_store()
+                user = user_store.getUser(auth_token)
+                return user
+            except Exception as e:
+                message = 'get_user() failed. Code: %s, message: %s' % (
+                    e.errorCode, e.parameter
+                )
+                self.logger.error(message)
 
         return await self.loop.run_in_executor(self.executor, get_info, auth_token)
 
@@ -196,6 +202,8 @@ class AsyncEvernoteApi:
 
     async def get_note_link(self, auth_token, note_guid, app_link=False):
         user = await self.get_user(auth_token)
+        if not user:
+            raise EvernoteApiError('User not found (token = %s)' % auth_token)
         app_link_template = 'evernote:///view/{user_id}/{shard}/{note_guid}/{note_guid}/'
         web_link_template = 'https://{service}/shard/{shard}/nl/{user_id}/{note_guid}/'
         params = {
