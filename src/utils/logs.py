@@ -115,7 +115,7 @@ def get_config(project_name, logs_dir, smtp_settings):
     if smtp_settings:
         config['handlers']['email'] = {
                 'level': 'ERROR',
-                'class': 'src.utils.logs.SslSMTPHandler',
+                'class': 'utils.logs.SslSMTPHandler',
                 'mailhost': (smtp_settings['host'], smtp_settings['port']),
                 'fromaddr': smtp_settings['email'],
                 'toaddrs': [smtp_settings['email']],
