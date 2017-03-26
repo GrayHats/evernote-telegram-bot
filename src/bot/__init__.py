@@ -74,7 +74,7 @@ class EvernoteBot(TelegramBot):
             user.evernote_access_token, query
         )
         if not notebooks:
-            message = 'Notebook {name}, {guid} not found (user {uid})'.format(
+            message = 'Notebook {name} (guid={guid}) not found (user {uid})'.format(
                 name=notebook_name, guid=notebook_guid, uid=user.id
             )
             self.logger.warn(message)
