@@ -48,9 +48,14 @@ class BotService:
     commands = []
 
     def __init__(self, config_file):
-        os.environ['EVERNOTEROBOT_CONFIG'] = config_file or ''
         config = importlib.import_module('src.config')
         self.config = config.config
+        if config_file and not os.path.exists(config_file):
+            config_dir = join(self.config['project_dir'], 'src/config')
+            path = join(config_dir, config_file)
+            if os.path.exists(path):
+                config_file = path
+        os.environ['EVERNOTEROBOT_CONFIG'] = config_file or ''
         daemons_dir = join(self.config['project_dir'], 'src/daemons')
         self.dealer = join(daemons_dir, 'dealer.py')
         self.downloader = join(daemons_dir, 'downloader.py')
