@@ -43,10 +43,16 @@ class TelegramDownloader(HttpDownloader):
             destination_file = os.path.join(self.download_dir, file_id)
             response = await self.async_download_file(download_url,
                                                       destination_file)
-            task.mime_type = response.headers.get(
-                'CONTENT-TYPE',
-                'application/octet-stream'
-            )
+            if download_url.endswith('.jpg') or download_url.endswith('.jpeg'):
+                mime_type = 'image/jpeg'
+            elif download_url.endswith('.png'):
+                mime_type = 'image/png'
+            else:
+                mime_type = response.headers.get(
+                    'CONTENT-TYPE',
+                    'application/octet-stream'
+                )
+            task.mime_type = mime_type
             task.completed = True
             task.file = destination_file
             task.save()
