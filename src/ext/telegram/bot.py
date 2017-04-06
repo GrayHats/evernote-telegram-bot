@@ -87,6 +87,12 @@ class TelegramBot:
             self.api.sendMessage(chat_id, text, reply_markup, parse_mode)
         )
 
+    async def async_send_message(self, chat_id, text, reply_markup=None,
+                                 parse_mode=None):
+        if reply_markup:
+            reply_markup = json.dumps(reply_markup)
+        return await self.api.sendMessage(chat_id, text, reply_markup, parse_mode)
+
     async def on_before_handle_update(self, update: TelegramUpdate):
         pass
 

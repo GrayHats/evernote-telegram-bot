@@ -174,16 +174,12 @@ read and update your notes'
         )
         session.save()
 
-    def accept_request(self, user: User, request_type: str, message: Message):
-        def on_message_sent(future_message):
-            reply = future_message.result()
-            TelegramUpdate.create(user_id=user.id,
-                                  request_type=request_type,
-                                  status_message_id=reply['message_id'],
-                                  message=message.raw)
-
-        future = self.send_message(user.telegram_chat_id, '🔄 Accepted')
-        future.add_done_callback(on_message_sent)
+    async def accept_request(self, user: User, request_type: str, message: Message):
+        reply = await self.async_send_message(user.telegram_chat_id, '🔄 Accepted')
+        TelegramUpdate.create(user_id=user.id,
+                              request_type=request_type,
+                              status_message_id=reply['message_id'],
+                              message=message.raw)
 
     async def handle_callback_query(self, query: CallbackQuery):
         data = json.loads(query.data)
@@ -236,11 +232,11 @@ read and update your notes'
             user.state = None
             user.save()
         else:
-            self.accept_request(user, 'text', message)
+            await self.accept_request(user, 'text', message)
 
     async def on_photo(self, message: Message):
         user = User.get({'id': message.user.id})
-        self.accept_request(user, 'photo', message)
+        await self.accept_request(user, 'photo', message)
         files = sorted(message.photos, key=lambda x: x.file_size,
                        reverse=True)
         DownloadTask.create(user_id=user.id,
@@ -250,7 +246,7 @@ read and update your notes'
 
     async def on_video(self, message: Message):
         user = User.get({'id': message.user.id})
-        self.accept_request(user, 'video', message)
+        await self.accept_request(user, 'video', message)
         video = message.video
         DownloadTask.create(user_id=user.id,
                             file_id=video.file_id,
@@ -259,7 +255,7 @@ read and update your notes'
 
     async def on_document(self, message: Message):
         user = User.get({'id': message.user.id})
-        self.accept_request(user, 'document', message)
+        await self.accept_request(user, 'document', message)
         document = message.document
         DownloadTask.create(user_id=user.id,
                             file_id=document.file_id,
@@ -273,8 +269,8 @@ read and update your notes'
                             file_id=voice.file_id,
                             file_size=voice.file_size,
                             completed=False)
-        self.accept_request(user, 'voice', message)
+        await self.accept_request(user, 'voice', message)
 
     async def on_location(self, message: Message):
         user = User.get({'id': message.user.id})
-        self.accept_request(user, 'location', message)
+        await self.accept_request(user, 'location', message)
