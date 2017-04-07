@@ -1,6 +1,6 @@
 debug: true
 project_name: evernoterobot
-# secret_key: secret_key
+secret_key: secret_key
 # botan_token: token
 
 gunicorn:
@@ -13,10 +13,10 @@ storage:
     # host: hostname
     # port: 27017
 
-# admins:
-#     - name: username
-#       login: login
-#       password: password
+admins:
+    - name: superuser
+      login: root
+      password: root  # yep, plain text
 
 # smtp:
 #     host: smtp.hostname
@@ -35,3 +35,9 @@ evernote:
 telegram:
     token: token
     webhook_url: url
+
+commands:
+    help: HelpCommand
+    start: StartCommand
+    notebook: SwitchNotebookCommand
+    switch_mode: SwitchModeCommand

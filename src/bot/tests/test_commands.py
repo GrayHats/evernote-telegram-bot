@@ -4,10 +4,10 @@ import pytest
 
 from bot import User
 from bot import EvernoteBot
-from bot.commands.help import HelpCommand
-from bot.commands.notebook import NotebookCommand
-from bot.commands.start import StartCommand
-from bot.commands.switch_mode import SwitchModeCommand
+from bot.commands import HelpCommand
+from bot.commands import SwitchNotebookCommand
+from bot.commands import StartCommand
+from bot.commands import SwitchModeCommand
 from bot.model import StartSession
 
 
@@ -29,7 +29,7 @@ async def test_help_command(testbot: EvernoteBot, user, text_update):
 @pytest.mark.async_test
 async def test_notebook_command(testbot: EvernoteBot, user, text_update):
     update = text_update
-    notebook_cmd = NotebookCommand(testbot)
+    notebook_cmd = SwitchNotebookCommand(testbot)
     await notebook_cmd.execute(update.message)
     await asyncio.sleep(0.0001)
     user = User.get({'id': user.id})

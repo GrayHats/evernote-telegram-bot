@@ -19,7 +19,6 @@ from bot.model import StartSession
 from ext.botan_async import track
 from ext.evernote.client import Evernote
 from ext.telegram.bot import TelegramBot
-from ext.telegram.bot import TelegramBotCommand
 from ext.telegram.bot import TelegramBotError
 from ext.telegram.models import Message
 from ext.telegram.models import CallbackQuery
@@ -27,28 +26,10 @@ from ext.telegram.models import CallbackQuery
 
 def get_commands(cmd_dir=None):
     commands = []
-    if cmd_dir is None:
-        cmd_dir = join(realpath(dirname(__file__)), 'commands')
-    exclude_modules = ['__init__']
-    for dirpath, dirnames, filenames in os.walk(cmd_dir):
-        if basename(dirpath) == 'tests':
-            continue
-        for filename in filenames:
-            file_path = join(dirpath, filename)
-            ext = file_path.split('.')[-1]
-            if ext not in ['py']:
-                continue
-            sys_path = list(sys.path)
-            sys.path.insert(0, cmd_dir)
-            module_name = inspect.getmodulename(file_path)
-            if module_name not in exclude_modules:
-                module = importlib.import_module(module_name)
-                sys.path = sys_path
-                for name, klass in inspect.getmembers(module):
-                    if inspect.isclass(klass) and\
-                       issubclass(klass, TelegramBotCommand) and\
-                       klass != TelegramBotCommand:
-                            commands.append(klass)
+    commands_module = importlib.import_module('bot.commands')
+    for cmd_name, class_name in config['commands'].items():
+        klass = getattr(commands_module, class_name)
+        commands.append(klass)
     return commands
 
 
