@@ -50,7 +50,7 @@ class Video(File):
 class Document(File):
     def __init__(self, data: dict):
         super().__init__(data)
-        self.file_name = data['file_name']
+        self.file_name = data.get('file_name', '')
 
 
 class Voice(File):
