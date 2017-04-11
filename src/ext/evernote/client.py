@@ -28,7 +28,7 @@ class Evernote:
             title = '%s...' % text[:15] if len(text) > 15 else text
         title = '{0} {1}'.format(self.title_prefix, title)
         return await self.api.new_note(token, notebook_guid, text,
-                                         title, files)
+                                       title, files)
 
     async def update_note(self, token, note_guid, notebook_guid,
                           text, files: List=None, *, request_type=None):
@@ -39,14 +39,14 @@ class Evernote:
                 'Note {0} not found. Creating new note'.format(note_guid)
             )
             note_guid = await self.api.new_note(token, notebook_guid, '',
-                                                  self.title_prefix, files)
+                                                self.title_prefix, files)
             note = await self.api.get_note(token, note_guid)
         content = NoteContent(note)
         content.add_text(text)
         if files:
             # Separate note for files
             note_guid = await self.api.new_note(token, notebook_guid, '',
-                                                  '[Files]', files)
+                                                '[Files]', files)
             user = await self.api.get_user(token)
             note_url = 'https://{host}/shard/{shard}/nl/{uid}/{guid}/'.format(
                 host=await self.api.get_service_host(token),
