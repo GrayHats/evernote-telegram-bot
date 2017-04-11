@@ -4,7 +4,6 @@ from bson import ObjectId
 import aiohttp_jinja2
 from aiohttp import web
 
-from bot import DownloadTask
 from bot.model import FailedUpdate
 from bot.model import TelegramUpdate
 from bot.model import User
@@ -82,8 +81,8 @@ async def dashboard(request):
 
 
 async def list_downloads(request):
-    downloads = [task.save_data() for task in DownloadTask.find()]
-    params = {'list_downloads': downloads}
+    # TODO:
+    params = {'list_downloads': []}
     response = aiohttp_jinja2.render_template('downloads.html', request,
                                               params)
     return response

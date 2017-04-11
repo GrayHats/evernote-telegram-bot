@@ -5,7 +5,7 @@ import time
 
 from config import config
 from utils.logs import get_logger
-from bot.model import DownloadTask
+from utils.downloader import HttpDownloader
 from bot.model import TelegramUpdate
 from bot.model import FailedUpdate
 from bot.model import User
@@ -13,6 +13,30 @@ from ext.telegram.models import Message
 from ext.evernote.client import Evernote
 from ext.evernote.api import TokenExpired
 from ext.telegram.api import BotApi
+
+
+class TelegramDownloader(HttpDownloader):
+
+    def __init__(self, bot_token, download_dir=None, *, loop=None):
+        logger = get_logger('downloader')
+        super().__init__(download_dir, logger=logger, loop=loop)
+        self._telegram_api = BotApi(bot_token)
+
+    async def download_file(self, file_id):
+        url = await self._telegram_api.getFile(file_id)
+        destination_file = os.path.join(self.download_dir, file_id)
+        response = await self.async_download_file(url,
+                                                  destination_file)
+        if url.endswith('.jpg') or url.endswith('.jpeg'):
+            mime_type = 'image/jpeg'
+        elif url.endswith('.png'):
+            mime_type = 'image/png'
+        else:
+            mime_type = response.headers.get(
+                'CONTENT-TYPE',
+                'application/octet-stream'
+            )
+        return (destination_file, mime_type)
 
 
 class BaseHandler:
@@ -100,32 +124,26 @@ Send /start to get new token'
 
 class FileHandler(BaseHandler):
 
+    def __init__(self):
+        self.downloader = TelegramDownloader(config['telegram']['token'],
+                                             config['downloads_dir'])
+
     async def get_files(self, message: Message):
         file_id = self.get_file_id(message)
-        file_path, mime_type = await self.get_downloaded_file(file_id)
+        file_path, mime_type = await self.downloader.download_file(file_id)
         return [(file_path, mime_type)]
 
     def get_file_id(self, message: Message):
         pass
 
-    async def get_downloaded_file(self, file_id):
-        task = DownloadTask.get({'file_id': file_id})
-        while not task.completed:
-            await asyncio.sleep(1)
-            task = DownloadTask.get({'id': task.id})
-        return task.file, task.mime_type
-
     async def cleanup(self, user: User, update: TelegramUpdate):
         try:
             file_id = self.get_file_id(Message(update.message))
-            task = DownloadTask.get({'file_id': file_id})
-            assert task.completed
-            assert task.file
-            os.unlink(task.file)
-            wav_file = "{0}.wav".format(task.file)
+            filename = os.path.join(self.downloader.download_dir, file_id)
+            os.unlink(filename)
+            wav_file = "{0}.wav".format(filename)
             if os.path.exists(wav_file):
                 os.unlink(wav_file)
-            task.delete()
         except Exception as e:
             self.logger.fatal(
                 '{0} cleanup failed: {1}'.format(self.__class__.__name__, e),

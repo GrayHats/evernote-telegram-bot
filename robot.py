@@ -58,7 +58,6 @@ class BotService:
         os.environ['EVERNOTEROBOT_CONFIG'] = config_file or ''
         daemons_dir = join(self.config['project_dir'], 'src/daemons')
         self.dealer = join(daemons_dir, 'dealer.py')
-        self.downloader = join(daemons_dir, 'downloader.py')
         self.gunicorn = join(daemons_dir, 'gunicorn.py')
 
     @cmd
@@ -66,8 +65,6 @@ class BotService:
         os.makedirs(self.config['logs_dir'], mode=0o700, exist_ok=True)
         os.makedirs(self.config['downloads_dir'], mode=0o700, exist_ok=True)
 
-        print('Starting downloader...')
-        os.system('{file} start'.format(file=self.downloader))
         print('Starting dealer...')
         os.system('{file} start'.format(file=self.dealer))
         if use_gunicorn:
@@ -82,7 +79,7 @@ class BotService:
 
     @cmd
     def stop(self):
-        services = [self.dealer, self.downloader, self.gunicorn]
+        services = [self.dealer, self.gunicorn]
         for filename in services:
             print('Stopping {}'.format(basename(filename)))
             os.system('{file} stop'.format(file=filename))
@@ -98,7 +95,7 @@ class BotService:
 
     @cmd
     def status(self):
-        services = [self.dealer, self.downloader, self.gunicorn]
+        services = [self.dealer, self.gunicorn]
         for filename in services:
             os.system('{file} status'.format(file=filename))
 

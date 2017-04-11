@@ -1,20 +1,12 @@
 import datetime
 import importlib
-import inspect
 import json
-import os
-import sys
-from os.path import realpath
-from os.path import dirname
-from os.path import join
-from os.path import basename
 
 import asyncio
 
 from config import config
 from bot.model import User
 from bot.model import TelegramUpdate
-from bot.model import DownloadTask
 from bot.model import StartSession
 from ext.botan_async import track
 from ext.evernote.client import Evernote
@@ -218,38 +210,17 @@ read and update your notes'
     async def on_photo(self, message: Message):
         user = User.get({'id': message.user.id})
         await self.accept_request(user, 'photo', message)
-        files = sorted(message.photos, key=lambda x: x.file_size,
-                       reverse=True)
-        DownloadTask.create(user_id=user.id,
-                            file_id=files[0].file_id,
-                            file_size=files[0].file_size,
-                            completed=False)
 
     async def on_video(self, message: Message):
         user = User.get({'id': message.user.id})
         await self.accept_request(user, 'video', message)
-        video = message.video
-        DownloadTask.create(user_id=user.id,
-                            file_id=video.file_id,
-                            file_size=video.file_size,
-                            completed=False)
 
     async def on_document(self, message: Message):
         user = User.get({'id': message.user.id})
         await self.accept_request(user, 'document', message)
-        document = message.document
-        DownloadTask.create(user_id=user.id,
-                            file_id=document.file_id,
-                            file_size=document.file_size,
-                            completed=False)
 
     async def on_voice(self, message: Message):
         user = User.get({'id': message.user.id})
-        voice = message.voice
-        DownloadTask.create(user_id=user.id,
-                            file_id=voice.file_id,
-                            file_size=voice.file_size,
-                            completed=False)
         await self.accept_request(user, 'voice', message)
 
     async def on_location(self, message: Message):
