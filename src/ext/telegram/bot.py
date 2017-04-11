@@ -51,7 +51,7 @@ class TelegramBot:
     async def handle_message(self, message: Message):
         await self.on_message_received(message)
 
-        if message.text.startswith('/') and message.bot_commands:
+        if message.text and message.text.startswith('/') and message.bot_commands:
             cmd = message.text.replace('/', '').strip()
             if cmd in self.commands:
                 await self.execute_command(cmd, message)

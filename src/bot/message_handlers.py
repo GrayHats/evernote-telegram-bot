@@ -20,10 +20,10 @@ class TelegramDownloader(HttpDownloader):
     def __init__(self, bot_token, download_dir=None, *, loop=None):
         logger = get_logger('downloader')
         super().__init__(download_dir, logger=logger, loop=loop)
-        self._telegram_api = BotApi(bot_token)
+        self.telegram_api = BotApi(bot_token)
 
     async def download_file(self, file_id):
-        url = await self._telegram_api.getFile(file_id)
+        url = await self.telegram_api.getFile(file_id)
         destination_file = os.path.join(self.download_dir, file_id)
         response = await self.async_download_file(url,
                                                   destination_file)
@@ -125,6 +125,7 @@ Send /start to get new token'
 class FileHandler(BaseHandler):
 
     def __init__(self):
+        super().__init__()
         self.downloader = TelegramDownloader(config['telegram']['token'],
                                              config['downloads_dir'])
 
