@@ -183,7 +183,7 @@ class VoiceHandler(FileHandler):
 
     async def get_files(self, message: Message):
         file_id = self.get_file_id(message)
-        ogg_file_path, mime_type = await self.get_downloaded_file(file_id)
+        ogg_file_path = os.path.join(self.downloader.download_dir, file_id)
         mime_type = 'audio/wav'
         wav_filename = "{0}.wav".format(ogg_file_path)
         try:
