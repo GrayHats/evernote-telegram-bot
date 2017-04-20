@@ -50,8 +50,7 @@ async def login(request):
         if login and password:
             for user in admins:
                 if login == user['login'] and password == user['password']:
-                    url = request.headers.get('REFERER', admin_url('/dashboard'))
-                    response = web.HTTPFound(url)
+                    response = web.HTTPFound(admin_url('/dashboard'))
                     response.set_cookie(
                         'evernoterobot',
                         cookies.encode({
