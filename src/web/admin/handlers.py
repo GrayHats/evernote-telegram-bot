@@ -24,7 +24,10 @@ def get_hash(s):
 
 def get_login(request):
     if request.cookies and request.cookies['evernoterobot']:
-        data = cookies.decode(request.cookies['evernoterobot'])
+        data = cookies.decode(
+            request.cookies['evernoterobot'],
+            key=config['secret_key']
+        )
         username = data.get('login')
         if filter(lambda x: x['login'] == username, config['admins']):
             now = time.time()
@@ -35,7 +38,7 @@ def get_login(request):
 async def login(request):
     if request.method == 'GET':
         if get_login(request):
-            url = request.headers.get('REFERER', '/')
+            url = request.headers.get('REFERER', admin_url('/dashboard'))
             return web.HTTPFound(url)
         params = {'admin_url': admin_url()}
         return aiohttp_jinja2.render_template('login.html', request, params)
@@ -47,14 +50,14 @@ async def login(request):
         if login and password:
             for user in admins:
                 if login == user['login'] and password == user['password']:
-                    url = request.headers.get('REFERER', '/')
+                    url = request.headers.get('REFERER', admin_url('/dashboard'))
                     response = web.HTTPFound(url)
                     response.set_cookie(
                         'evernoterobot',
                         cookies.encode({
                             'login': login,
                             'expire_time': time.time() + 3600 * 24,
-                        })
+                        }, key=config['secret_key'])
                     )
                     return response
             params = {'error': 'Invalid login or password'}
