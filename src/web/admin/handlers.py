@@ -45,8 +45,6 @@ async def login(request):
         password = request.POST.get('password')
         admins = config['admins']
         if login and password:
-            login = get_hash(login)
-            password = get_hash(password)
             for user in admins:
                 if login == user['login'] and password == user['password']:
                     url = request.headers.get('REFERER', '/')
