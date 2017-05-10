@@ -25,8 +25,7 @@ class TelegramDownloader(HttpDownloader):
     async def download_file(self, file_id):
         url = await self.telegram_api.getFile(file_id)
         destination_file = os.path.join(self.download_dir, file_id)
-        response = await self.async_download_file(url,
-                                                  destination_file)
+        response = await self.async_download_file(url, destination_file)
         if url.endswith('.jpg') or url.endswith('.jpeg'):
             mime_type = 'image/jpeg'
         elif url.endswith('.png'):

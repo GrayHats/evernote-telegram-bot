@@ -7,6 +7,10 @@ import atexit
 import signal
 
 
+class DaemonError(Exception):
+    pass
+
+
 class Daemon:
     """A generic daemon class.
 
@@ -27,8 +31,7 @@ class Daemon:
                 # sys.exit(0)
                 return 1
         except OSError as err:
-            sys.stderr.write('fork #1 failed: {0}\n'.format(err))
-            sys.exit(1)
+            raise DaemonError('fork #1 failed: {0}\n'.format(err))
 
         # decouple from parent environment
         os.chdir('/')
@@ -42,8 +45,7 @@ class Daemon:
                 # exit from second parent
                 sys.exit(0)
         except OSError as err:
-            sys.stderr.write('fork #2 failed: {0}\n'.format(err))
-            sys.exit(1)
+            raise DaemonError('fork #2 failed: {0}\n'.format(err))
 
         # redirect standard file descriptors
         sys.stdout.flush()
@@ -85,8 +87,7 @@ class Daemon:
         if pid:
             message = "pidfile {0} already exist. " + \
                     "Daemon already running?\n"
-            sys.stderr.write(message.format(self.pidfile))
-            sys.exit(1)
+            raise DaemonError(message.format(self.pidfile))
 
         # Start the daemon
         if self.daemonize() == 1:
@@ -120,8 +121,7 @@ class Daemon:
                 if os.path.exists(self.pidfile):
                     os.remove(self.pidfile)
             else:
-                print(str(err.args))
-                sys.exit(1)
+                raise DaemonError(str(err.args))
         map(lambda fd: fd.close(), self.descriptors)
 
     def restart(self):

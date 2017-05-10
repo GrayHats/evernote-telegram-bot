@@ -159,22 +159,36 @@ class AsyncEvernoteApi:
             note_store = sdk.get_note_store()
             method = getattr(note_store, method_name)
             result = method(*args, **kwargs)
-            self.logger.debug("Finish call '{0}' in {1} sec".format(method_name, time.time() - start_time))
+            self.logger.debug("Finish call '{0}' in {1} sec".format(
+                method_name, time.time() - start_time)
+            )
             return result
         except ErrorTypes.EDAMNotFoundException:
             exc_info = ExceptionInfo(NoteNotFound, 'Note not found')
         except ErrorTypes.EDAMUserException as e:
             if e.errorCode == 3:
-                exc_info = ExceptionInfo(PermissionDenied, 'It seems that token is invalid (or has no permissions)')
+                exc_info = ExceptionInfo(
+                    PermissionDenied,
+                    'It seems that token is invalid (or has no permissions)'
+                )
             elif e.errorCode == 9:
                 exc_info = ExceptionInfo(TokenExpired, 'Evernote access token is expired')
             else:
-                exc_info = ExceptionInfo(EvernoteApiError, 'Error code = {0}, parameter = {1}'.format(e.errorCode, e.parameter))
+                exc_info = ExceptionInfo(
+                    EvernoteApiError,
+                    'Error code = {0}, parameter = {1}'.format(e.errorCode, e.parameter)
+                )
         except ErrorTypes.EDAMSystemException as e:
             if e.errorCode == 19 and hasattr(e, 'rateLimitDuration'):
-                exc_info = ExceptionInfo(RateLimitReached, 'rateLimitDuration == {0}'.format(e.rateLimitDuration))
+                exc_info = ExceptionInfo(
+                    RateLimitReached,
+                    'rateLimitDuration == {0}'.format(e.rateLimitDuration)
+                )
             else:
-                exc_info = ExceptionInfo(EvernoteApiError, "{0}: {1}".format(getattr(e, 'errorCode', ''), getattr(e, 'message', '')))
+                exc_info = ExceptionInfo(
+                    EvernoteApiError,
+                    "{0}: {1}".format(getattr(e, 'errorCode', ''), getattr(e, 'message', ''))
+                )
         except Exception as e:
             self.logger.error(e)
             raise EvernoteApiError('Evernote API error') from None

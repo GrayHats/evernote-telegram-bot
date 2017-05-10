@@ -10,6 +10,7 @@ from bot.message_handlers import VoiceHandler
 from bot.message_handlers import LocationHandler
 from bot.model import TelegramUpdate
 from bot.model import User
+from utils.daemon import Daemon
 
 
 class EvernoteDealer:
@@ -91,3 +92,10 @@ class EvernoteDealer:
             user.id, time.time() - start_ts
         )
         self.logger.debug(log_message)
+
+
+class EvernoteDealerDaemon(Daemon):
+
+    def run(self):
+        dealer = EvernoteDealer()
+        dealer.run()
