@@ -88,14 +88,14 @@ class ProcessOwner:
 class BotService(ProcessOwner):
     def __init__(self, config_file):
         sys.path.append(realpath(join(dirname(__file__), 'src')))
-        config = importlib.import_module('config')
-        self.config = config.config
         if config_file and not os.path.exists(config_file):
-            config_dir = join(self.config['project_dir'], 'src/config')
+            config_dir = join(realpath(dirname(__file__)), 'src/config')
             path = join(config_dir, config_file)
             if os.path.exists(path):
                 config_file = path
         os.environ['EVERNOTEROBOT_CONFIG'] = config_file or ''
+        config = importlib.import_module('config')
+        self.config = config.config
         self.gunicorn_pidfile = join(self.config['project_dir'], 'gunicorn.pid')
 
         dealer_module = importlib.import_module('bot.dealer')
