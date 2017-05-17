@@ -141,8 +141,6 @@ def get_config(project_name, logs_dir, smtp_settings):
 
 
 def get_logger(name=''):
-    if not os.path.exists(config['logs_dir']):
-        os.makedirs(config['logs_dir'], mode=0o700, exist_ok=True)
     logging.config.dictConfig(get_config(
         project_name=config['project_name'],
         logs_dir=config['logs_dir'],

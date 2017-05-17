@@ -35,3 +35,8 @@ project_dir = realpath(dirname(src_dir))
 config['project_dir'] = project_dir
 config['logs_dir'] = join(project_dir, 'logs')
 config['downloads_dir'] = join(project_dir, 'downloads')
+
+if not os.path.exists(config['logs_dir']):
+    os.makedirs(config['logs_dir'], mode=0o700, exist_ok=True)
+if not os.path.exists(config['downloads_dir']):
+    os.makedirs(config['downloads_dir'], mode=0o700, exist_ok=True)
