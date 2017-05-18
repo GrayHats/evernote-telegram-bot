@@ -1,4 +1,5 @@
 import time
+import datetime
 import hashlib
 from bson import ObjectId
 import aiohttp_jinja2
@@ -124,7 +125,11 @@ async def fix_failed_update(request):
 async def list_users(request):
     page = request.GET.get('page', 0)
     page_size = 50
+    week_ago = datetime.datetime.now() - datetime.timedelta(days=7)
+    month_ago = datetime.datetime.now() - datetime.timedelta(days=30)
     total_cnt = User.count()
+    weekly_active = User.count({'last_request_time': {'$gte': week_ago}})
+    monthly_active = User.count({'last_request_time': {'$gte': month_ago}})
     num_pages = total_cnt / page_size + 1
     all_users = User.find({}, skip=page*page_size, limit=page_size,
                           sort=[('last_request_time', -1)])
@@ -132,7 +137,13 @@ async def list_users(request):
     return aiohttp_jinja2.render_template(
         'users.html',
         request,
-        {'users': users, 'num_pages': num_pages}
+        {
+            'users': users,
+            'num_pages': num_pages,
+            'total': total_cnt,
+            'monthly_active': monthly_active,
+            'weekly_active': weekly_active,
+        }
     )
 
 
