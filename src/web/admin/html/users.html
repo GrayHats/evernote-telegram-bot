@@ -16,6 +16,10 @@
     </thead>
 
     <tbody>
+    <pre>
+    Total: <b>{{ total }}</b>
+    Active by week: <b>{{ weekly_active }}</b>
+    Active by month: <b>{{ monthly_active }}</b></pre>
     {% for user in users %}
         <tr>
             <td>{{ user.id }}</td>
