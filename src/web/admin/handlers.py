@@ -125,9 +125,10 @@ async def fix_failed_update(request):
 async def list_users(request):
     page = request.GET.get('page', 0)
     page_size = 50
-    week_ago = datetime.datetime.now() - datetime.timedelta(days=7)
-    month_ago = datetime.datetime.now() - datetime.timedelta(days=30)
     total_cnt = User.count()
+    now = datetime.datetime.now()
+    week_ago = now - datetime.timedelta(days=7)
+    month_ago = now - datetime.timedelta(days=30)
     weekly_active = User.count({'last_request_time': {'$gte': week_ago}})
     monthly_active = User.count({'last_request_time': {'$gte': month_ago}})
     num_pages = total_cnt / page_size + 1
