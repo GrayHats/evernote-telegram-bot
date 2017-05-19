@@ -6,6 +6,7 @@ from typing import Tuple
 
 from pymongo import MongoClient
 from pymongo.collection import Collection
+from pymongo.collection import ReturnDocument
 
 from bot.model import Model
 from bot.util import dict_get, dict_set
@@ -47,6 +48,10 @@ class Storage:
 
     @abstractmethod
     def find(self, query: dict, sort: List[Tuple], skip=None, limit=None):
+        pass
+
+    @abstractmethod
+    def find_and_modify(self, query, update, sort=None):
         pass
 
 
@@ -99,6 +104,14 @@ class MemoryStorage(Storage):
         if limit is not None:
             objects = objects[:limit]
         return objects
+
+    def find_and_modify(self, query, update, sort=None):
+        documents = self.find(query, sort, limit=1)
+        if not documents:
+            return False
+        self.update({'_id': documents[0]['_id']}, update)
+        # TODO: ensure that document was updated
+        return True
 
     def save(self, model: Model):
         if not model.id:
@@ -172,6 +185,12 @@ class MongoStorage(Storage):
             document['id'] = document['_id']
             del document['_id']
             yield document
+
+    def find_and_modify(self, query, update, sort=None):
+        collection = self.__get_collection()
+        document = collection.find_one_and_update(
+            query, update, sort, return_document=ReturnDocument.AFTER)
+        return document
 
     def save(self, model: Model):
         data = model.save_data()

@@ -38,7 +38,12 @@ class EvernoteDealer:
 
     async def async_run(self):
         while True:
-            updates_by_user = self.fetch_updates()
+            try:
+                updates_by_user = self.fetch_updates()
+            except Exception as e:
+                err = "{0}\nCan't load telegram updates from mongo".format(e)
+                self.logger.error(err, exc_info=1)
+                updates_by_user = None
             if not updates_by_user:
                 await asyncio.sleep(0.1)
                 continue
@@ -49,30 +54,24 @@ class EvernoteDealer:
     def fetch_updates(self):
         self.logger.debug('Fetching telegram updates...')
         updates_by_user = {}
-        try:
-            fetched_updates = []
-            # TODO: find and modify in one operation
-            updates = TelegramUpdate.find({'in_process': {'$exists': False}},
-                                          [('created', 1)])
-            for entry in updates:
-                update = entry.update(
-                    {'in_process': {'$exists': False}},
-                    {'in_process': True}
-                )
-                fetched_updates.append(update)
-
-            self.logger.debug('Fetched {} updates'.format(
-                len(fetched_updates)
-            ))
-
-            for update in fetched_updates:
-                user_id = update.user_id
-                if not updates_by_user.get(user_id):
-                    updates_by_user[user_id] = []
-                updates_by_user[user_id].append(update)
-        except Exception as e:
-            err = "{0}\nCan't load telegram updates from mongo".format(e)
-            self.logger.error(err, exc_info=1)
+        fetched_updates = []
+        # TODO: find and modify in one operation
+        # updates = TelegramUpdate.find({'in_process': {'$exists': False}},
+        #                               [('created', 1)])
+        query = {'in_process': {'$exists': True}}
+        update_query = {'$set': {'in_process': True}}
+        sort = [('created', 1)]
+        while True:
+            update = TelegramUpdate.find_and_modify(query, update_query, sort)
+            if not update:
+                break
+            fetched_updates.append(update)
+        self.logger.debug('Fetched {} updates'.format(len(fetched_updates)))
+        for update in fetched_updates:
+            user_id = update.user_id
+            if not updates_by_user.get(user_id):
+                updates_by_user[user_id] = []
+            updates_by_user[user_id].append(update)
         return updates_by_user
 
     async def process_user_updates(self, user, update_list):
