@@ -41,6 +41,8 @@ Bot can work in two modes:
 1. **Multiple notes** mode.
 
   In this mode all your messages will be saved as **separate** note in Evernote notebook.
+
+
 2. **One note** mode.
 
   In this mode all your messages will be save in **same** note in Evernote notebook.
