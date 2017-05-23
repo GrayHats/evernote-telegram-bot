@@ -123,6 +123,8 @@ class MemoryStorage(Storage):
         for k, obj in self._items.get(self.collection, {}).items():
             if self._check_query(obj, query):
                 for k, v in new_values.items():
+                    if k == '$set':
+                        return self.update(query, v)
                     path = k.split('.')
                     if dict_set(obj, v, path):
                         return obj
