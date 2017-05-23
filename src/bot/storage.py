@@ -189,7 +189,7 @@ class MongoStorage(Storage):
     def find_and_modify(self, query, update, sort=None):
         collection = self.__get_collection()
         document = collection.find_one_and_update(
-            query, update, sort, return_document=ReturnDocument.AFTER)
+            query, update, sort=sort, return_document=ReturnDocument.AFTER)
         return document
 
     def save(self, model: Model):
