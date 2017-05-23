@@ -64,7 +64,9 @@ class Model:
 
     @classmethod
     def find_and_modify(cls, query, update, sort=None):
-        return cls.__get_storage().find_and_modify(query, update, sort)
+        document = cls.__get_storage().find_and_modify(query, update, sort)
+        if document:
+            return cls(**document)
 
     def save(self):
         self.__get_storage().save(self)

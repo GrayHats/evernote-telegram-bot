@@ -55,11 +55,8 @@ class EvernoteDealer:
         self.logger.debug('Fetching telegram updates...')
         updates_by_user = {}
         fetched_updates = []
-        # TODO: find and modify in one operation
-        # updates = TelegramUpdate.find({'in_process': {'$exists': False}},
-        #                               [('created', 1)])
-        query = {'in_process': {'$exists': True}}
-        update_query = {'$set': {'in_process': True}}
+        query = {'in_process': {'$exists': False}}
+        update_query = {'in_process': True}
         sort = [('created', 1)]
         while True:
             update = TelegramUpdate.find_and_modify(query, update_query, sort)

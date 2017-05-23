@@ -14,6 +14,7 @@ def dict_get(dict_obj: dict, path: List[str]):
 def dict_set(dict_obj: dict, value, path: List[str]):
     n = len(path)
     pointer = dict_obj
+    changed = False
     for i, step in enumerate(path):
         if i < (n - 1):
             if not pointer.get(step):
@@ -21,6 +22,8 @@ def dict_set(dict_obj: dict, value, path: List[str]):
             if not isinstance(pointer[step], dict):
                 raise Exception('Invalid path')
             pointer = pointer[step]
-        else:
+        elif pointer.get(step) != value:
             pointer[step] = value
-    return dict_obj
+            changed = True
+    if changed:
+        return dict_obj

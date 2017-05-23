@@ -109,9 +109,7 @@ class MemoryStorage(Storage):
         documents = self.find(query, sort, limit=1)
         if not documents:
             return False
-        self.update({'_id': documents[0]['_id']}, update)
-        # TODO: ensure that document was updated
-        return True
+        return self.update({'id': documents[0]['id']}, update)
 
     def save(self, model: Model):
         if not model.id:
@@ -126,8 +124,8 @@ class MemoryStorage(Storage):
             if self._check_query(obj, query):
                 for k, v in new_values.items():
                     path = k.split('.')
-                    dict_set(obj, v, path)
-                    return obj
+                    if dict_set(obj, v, path):
+                        return obj
 
     def delete(self, model: Model):
         classname = self.collection
