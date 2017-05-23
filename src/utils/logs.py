@@ -1,4 +1,3 @@
-import os
 import logging
 import logging.config
 import smtplib
@@ -55,7 +54,7 @@ class SslSMTPHandler(SMTPHandler):
 
 def get_config(project_name, logs_dir, smtp_settings):
 
-    def file_handler(filename, log_level='DEBUG'):
+    def file_handler(filename, log_level='INFO'):
         if config.get('debug'):
             log_level = 'DEBUG'
         return {
