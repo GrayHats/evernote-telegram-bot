@@ -82,26 +82,33 @@ notes will be saved in <a href="{0}">this note</a>'.format(note_link)
     async def set_mode(self, user, mode):
         text_mode = '{0}'.format(mode)
         mode = mode.replace(' ', '_').lower()
+        chat_id = user.telegram_chat_id
         if mode not in ['one_note', 'multiple_notes']:
             text = 'Invalid mode "{0}"'.format(text_mode)
-            self.send_message(user.telegram_chat_id, text)
+            self.send_message(chat_id, text)
             raise Exception(text)
         if user.mode == mode:
+            text = 'You are already on mode {0}'.format(text_mode)
+            self.send_message(chat_id, text)
             return
-        chat_id = user.telegram_chat_id
-        if mode != 'one_note':
+        if mode == 'one_note':
+            await self.set_one_note_mode(user)
+        else:
             user.mode = mode
+            user.save()
             self.send_message(
                 chat_id,
                 'From now this bot in mode "{0}"'.format(text_mode),
                 {'hide_keyboard': True}
             )
-            return
+
+    async def set_one_note_mode(self, user):
+        mode = 'one_note'
+        chat_id = user.telegram_chat_id
         # 'one_note' mode required full permissions
         if user.settings.get('evernote_access', 'basic') != 'full':
             await self.request_full_permissions(user)
             return
-
         user.mode = mode
         reply = await self.send_message(chat_id, 'Please wait')
         note_guid = await self.evernote.create_note(
@@ -111,8 +118,8 @@ notes will be saved in <a href="{0}">this note</a>'.format(note_link)
             user.current_notebook['guid']
         )
         user.places[user.current_notebook['guid']] = note_guid
-
-        text = 'Bot switched to mode "{0}"'.format(text_mode)
+        user.save()
+        text = 'Bot switched to mode "One note"'
         asyncio.ensure_future(
             self.api.editMessageText(chat_id, reply['message_id'], text)
         )
