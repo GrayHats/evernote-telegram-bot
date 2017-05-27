@@ -88,7 +88,7 @@ notes will be saved in <a href="{0}">this note</a>'.format(note_link)
             self.send_message(chat_id, text)
             raise Exception(text)
         if user.mode == mode:
-            text = 'You are already on mode {0}'.format(text_mode)
+            text = 'You are already in mode "{0}"'.format(text_mode)
             self.send_message(chat_id, text)
             return
         if mode == 'one_note':
