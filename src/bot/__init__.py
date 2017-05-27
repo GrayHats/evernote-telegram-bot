@@ -80,16 +80,15 @@ notes will be saved in <a href="{0}">this note</a>'.format(note_link)
                               parse_mode='Html')
 
     async def set_mode(self, user, mode):
-        if user.mode == mode:
-            return
-        if mode not in ['one_note', 'multiple_notes']:
-            text = 'Invalid mode "{0}"'.format(mode)
-            self.send_message(user.telegram_chat_id, text)
-            raise Exception(text)
         text_mode = '{0}'.format(mode)
         mode = mode.replace(' ', '_').lower()
+        if mode not in ['one_note', 'multiple_notes']:
+            text = 'Invalid mode "{0}"'.format(text_mode)
+            self.send_message(user.telegram_chat_id, text)
+            raise Exception(text)
+        if user.mode == mode:
+            return
         chat_id = user.telegram_chat_id
-        # TODO: check user.mode == mode
         if mode != 'one_note':
             user.mode = mode
             self.send_message(
