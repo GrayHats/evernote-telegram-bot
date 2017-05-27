@@ -30,6 +30,7 @@ class SslSMTPHandler(SMTPHandler):
                             ",".join(self.toaddrs),
                             self.getSubject(record),
                             formatdate(), msg)
+            msg = msg.encode()
             if self.username:
                 # smtp.ehlo() # for tls add this line
                 # smtp.starttls() # for tls add this line
