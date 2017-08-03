@@ -17,7 +17,6 @@ class StartCommand(TelegramBotCommand):
     async def execute(self, message: Message):
         chat_id = message.chat.id
         user_id = message.user.id
-        self.bot.track(message)
         session_key = ''.join(
             [random.choice(string.ascii_letters + string.digits)
              for i in range(32)]
@@ -59,7 +58,6 @@ class HelpCommand(TelegramBotCommand):
     name = 'help'
 
     async def execute(self, message: Message):
-        self.bot.track(message)
         text = '''This is bot for Evernote (https://evernote.com).
 
 Just send message to bot and it creates note in your Evernote notebook. \
@@ -101,7 +99,6 @@ class SwitchNotebookCommand(TelegramBotCommand):
     name = 'notebook'
 
     async def execute(self, message: Message):
-        self.bot.track(message)
         user = User.get({'id': message.user.id})
         notebooks = await self.bot.evernote.list_notebooks(
             user.evernote_access_token
@@ -131,7 +128,6 @@ class SwitchModeCommand(TelegramBotCommand):
     name = 'switch_mode'
 
     async def execute(self, message: Message):
-        self.bot.track(message)
         user = User.get({'id': message.user.id})
         buttons = []
         for mode in ['one_note', 'multiple_notes']:

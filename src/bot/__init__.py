@@ -8,7 +8,6 @@ from config import config
 from bot.model import User
 from bot.model import TelegramUpdate
 from bot.model import StartSession
-from ext.botan_async import track
 from ext.evernote.client import Evernote
 from ext.telegram.bot import TelegramBot
 from ext.telegram.bot import TelegramBotError
@@ -32,9 +31,6 @@ class EvernoteBot(TelegramBot):
         self.evernote = Evernote(title_prefix='[TELEGRAM BOT]')
         for cmd_class in get_commands():
             self.add_command(cmd_class)
-
-    def track(self, message: Message):
-        asyncio.ensure_future(track(message.user.id, message.raw))
 
     async def set_current_notebook(self, user, notebook_name=None,
                                    notebook_guid=None):
@@ -173,7 +169,6 @@ read and update your notes'
             await self.set_current_notebook(user, notebook_guid=data['nb'])
 
     async def on_message_received(self, message: Message):
-        self.track(message)
         user_id = message.user.id
         if '/start' in message.bot_commands:
             return
