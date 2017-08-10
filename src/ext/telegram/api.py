@@ -62,9 +62,6 @@ class BotApi:
 
     async def getFile(self, file_id):
         file = await self.__request('getFile', file_id=file_id)
-        max_file_size = 20 * 1024 * 1024  # 20 Mb
-        if file['file_size'] > max_file_size:
-            raise BotApiError(-1, 'File too big')
         download_url = 'https://api.telegram.org/file/bot%(token)s/%(path)s' %\
             {
                 'token': self.token,
