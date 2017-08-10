@@ -126,8 +126,9 @@ class FileHandler(BaseHandler):
 
     def __init__(self):
         super().__init__()
-        self.downloader = TelegramDownloader(config['telegram']['token'],
-                                             config['downloads_dir'])
+        token = config['telegram']['token']
+        downloads_dir = config['downloads_dir']
+        self.downloader = TelegramDownloader(token, downloads_dir)
 
     async def get_files(self, message: Message):
         file_id = self.get_file_id(message)
@@ -141,15 +142,15 @@ class FileHandler(BaseHandler):
         try:
             file_id = self.get_file_id(Message(update.message))
             filename = os.path.join(self.downloader.download_dir, file_id)
-            os.unlink(filename)
+            if os.path.exists(filename):
+                os.unlink(filename)
             wav_file = "{0}.wav".format(filename)
             if os.path.exists(wav_file):
                 os.unlink(wav_file)
         except Exception as e:
-            self.logger.fatal(
-                '{0} cleanup failed: {1}'.format(self.__class__.__name__, e),
-                exc_info=1
-            )
+            message = '{classname} cleanup failed: {error}'.format(
+                classname=self.__class__.__name__, error=e)
+            self.logger.fatal(message, exc_info=1)
         await super().cleanup(user, update)
 
 
