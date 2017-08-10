@@ -4,9 +4,10 @@ import aiohttp
 
 class BotApiError(Exception):
 
-    def __init__(self, code, description):
-        super().__init__(description)
+    def __init__(self, code, message):
+        super().__init__(message)
         self.code = code
+        self.message = message
 
 
 class BotApi:

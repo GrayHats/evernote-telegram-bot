@@ -67,7 +67,7 @@ Send /start to get new token'
             self.logger.error(e, exc_info=1)
             FailedUpdate.create(error=traceback.format_exc(),
                                 **update.save_data())
-            error_text = e.message or 'Something went wrong'
+            error_text = e.message if hasattr(e, 'message') else 'Something went wrong'
             text = '❌ {error}. Please, try again'.format(error=error_text)
             self.update_status_message(user, update, text)
 
