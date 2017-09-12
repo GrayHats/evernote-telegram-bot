@@ -133,7 +133,10 @@ class FileHandler(BaseHandler):
     async def get_files(self, message: Message):
         file_id = self.get_file_id(message)
         file_path, mime_type = await self.downloader.download_file(file_id)
-        destination_file = os.path.join(os.path.dirname(file_path), message.document.file_name)
+        if message.document:
+            destination_file = os.path.join(os.path.dirname(file_path), message.document.file_name)
+        else:
+            destination_file = file_path
         os.rename(file_path, destination_file)
         return [(destination_file, mime_type)]
 
