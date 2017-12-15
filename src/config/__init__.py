@@ -18,16 +18,17 @@ def merge_configs(dict1, dict2):
     return dict1
 
 
-config_file = realpath(join(dirname(__file__), 'config.yaml'))
+config_dir = realpath(dirname(__file__))
+config_file = join(config_dir, 'config.yaml')
 with open(config_file) as f:
     config = yaml.load(f.read())
 
-additional_config_file = os.environ.get('EVERNOTEROBOT_CONFIG')
-if additional_config_file and exists(additional_config_file):
-    with open(additional_config_file) as f:
-        additional_config = yaml.load(f.read())
-        if additional_config:
-            config = merge_configs(config, additional_config)
+local_config_file = join(config_dir, 'local.yaml')
+if local_config_file and exists(local_config_file):
+    with open(local_config_file) as f:
+        local_config = yaml.load(f.read())
+        if local_config:
+            config = merge_configs(config, local_config)
 
 src_dir = realpath(dirname(dirname(__file__)))
 sys.path.append(src_dir)

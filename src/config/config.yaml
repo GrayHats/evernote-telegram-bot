@@ -1,7 +1,6 @@
 debug: true
 project_name: evernoterobot
 secret_key: secret_key
-# botan_token: token
 
 gunicorn:
     port: 9000
@@ -31,7 +30,10 @@ evernote:
         key: key
         secret: secret
         oauth_callback: url
-
+#    full_access:
+#        key: key
+#        secret: secret
+#        oauth_callback: url
 telegram:
     token: token
     webhook_url: url

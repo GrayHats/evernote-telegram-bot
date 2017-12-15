@@ -86,14 +86,8 @@ class ProcessOwner:
 
 
 class BotService(ProcessOwner):
-    def __init__(self, config_file):
+    def __init__(self):
         sys.path.append(realpath(join(dirname(__file__), 'src')))
-        if config_file and not os.path.exists(config_file):
-            config_dir = join(realpath(dirname(__file__)), 'src/config')
-            path = join(config_dir, config_file)
-            if os.path.exists(path):
-                config_file = path
-        os.environ['EVERNOTEROBOT_CONFIG'] = config_file or ''
         config = importlib.import_module('config')
         self.config = config.config
         self.gunicorn_pidfile = join(self.config['project_dir'], 'gunicorn.pid')
@@ -143,16 +137,14 @@ class BotService(ProcessOwner):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', help='Path to config file')
     parser.add_argument('--gunicorn', action='store_true')
     parser.add_argument('CMD', help="Command (start/stop/reload/etc.)\n")
     args = parser.parse_args()
     cmd = args.CMD
-    config_file = args.config
     use_gunicorn = args.gunicorn
 
     try:
-        service = BotService(config_file)
+        service = BotService()
         if cmd == 'start':
             service.start(use_gunicorn)
         elif cmd == 'stop':
