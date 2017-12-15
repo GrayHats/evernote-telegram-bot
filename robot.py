@@ -49,7 +49,7 @@ class BotService:
     def create_daemon(self, name, class_object):
         project_dir = self.config['project_dir']
         pidfile = join(project_dir, '{}.pid'.format(name))
-        stdout_filename = join(project_dir, '{}.stdout.log'.format(name))
+        stdout_filename = join(self.config['logs_dir'], '{}.stdout.log'.format(name))
         return class_object(pidfile, stdout_filename)
 
     def start(self):

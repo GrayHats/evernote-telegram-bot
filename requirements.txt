@@ -2,7 +2,6 @@ aiohttp==0.22.5
 aiohttp-jinja2==0.8.0
 aiomcache==0.3.0
 chardet==2.3.0
-gunicorn==19.6.0
 Jinja2==2.8
 MarkupSafe==0.23
 multidict==1.2.2
