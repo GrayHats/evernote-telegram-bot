@@ -12,6 +12,13 @@ from os.path import dirname
 from os.path import basename
 from os.path import realpath
 
+import aiohttp.web
+
+sys.path.append(join(realpath(dirname(__file__)), 'src'))
+
+
+from utils.daemon import Daemon
+
 
 def green(text):
     if type(text) == bytes:
@@ -23,6 +30,12 @@ def red(text):
     if type(text) == bytes:
         text = text.decode()
     return "\033[91m%s\033[0m" % text
+
+
+class BotDaemon(Daemon):
+    def run(self):
+        from web.webapp import app
+        aiohttp.web.run_app(app)
 
 
 class ProcessOwner:
@@ -87,44 +100,30 @@ class ProcessOwner:
 
 class BotService(ProcessOwner):
     def __init__(self):
-        sys.path.append(realpath(join(dirname(__file__), 'src')))
         config = importlib.import_module('config')
         self.config = config.config
-        self.gunicorn_pidfile = join(self.config['project_dir'], 'gunicorn.pid')
 
         dealer_module = importlib.import_module('bot.dealer')
         dealer_pidfile = join(self.config['project_dir'], 'dealer.pid')
         dealer_stdout = join(self.config['project_dir'], 'dealer.stdout.log')
         self.dealer_daemon = dealer_module.EvernoteDealerDaemon(dealer_pidfile, dealer_stdout)
+        bot_pidfile = join(self.config['project_dir'], 'bot.pid')
+        bot_stdout = join(self.config['project_dir'], 'bot.stdout.log')
+        self.bot_daemon = BotDaemon(bot_pidfile, bot_stdout)
 
-    def start(self, use_gunicorn=False):
+    def start(self):
         os.makedirs(self.config['logs_dir'], mode=0o700, exist_ok=True)
         os.makedirs(self.config['downloads_dir'], mode=0o700, exist_ok=True)
         self.daemon_start(self.dealer_daemon)
-        if use_gunicorn:
-            import src.config.gunicorn as gunicorn_config
-            config_file = join(self.config['project_dir'], 'src/config/gunicorn.py')
-            app_name = gunicorn_config.app_name
-            self.run('gunicorn', '--config={}'.format(config_file), app_name)
-        else:
-            from aiohttp import web
-            from src.web.webapp import app
-            web.run_app(app)
+        self.daemon_start(self.bot_daemon)
 
     def stop(self):
         self.daemon_stop(self.dealer_daemon)
-        self.kill(self.gunicorn_pidfile, message='Stopping gunicorn...')
+        self.daemon_stop(self.bot_daemon)
 
-    def restart(self, use_gunicorn=False):
+    def restart(self):
         self.stop()
-        self.start(use_gunicorn)
-
-    def reload(self):
-        self.kill(self.gunicorn_pidfile, signal=signal.SIGHUP, message='Reloading gunicorn...')
-
-    def status(self):
-        for pidfile in [self.dealer_pidfile, self.gunicorn_pidfile]:
-            print(green('STARTED') if self.process_exists(pidfile) else red('STOPPED'))
+        self.start()
 
     def set_webhook(self):
         from ext.telegram.api import BotApi
@@ -137,24 +136,17 @@ class BotService(ProcessOwner):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gunicorn', action='store_true')
-    parser.add_argument('CMD', help="Command (start/stop/reload/etc.)\n")
+    parser.add_argument('CMD', help="Command (start/stop/restart)\n")
     args = parser.parse_args()
     cmd = args.CMD
-    use_gunicorn = args.gunicorn
-
     try:
         service = BotService()
         if cmd == 'start':
-            service.start(use_gunicorn)
+            service.start()
         elif cmd == 'stop':
             service.stop()
         elif cmd == 'restart':
-            service.restart(use_gunicorn)
-        elif cmd == 'reload':
-            service.reload()
-        elif cmd == 'status':
-            service.status()
+            service.restart()
         elif cmd == 'set_webhook':
             service.set_webhook()
         else:
