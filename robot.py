@@ -16,7 +16,7 @@ import aiohttp.web
 
 sys.path.append(join(realpath(dirname(__file__)), 'src'))
 
-
+from config import config
 from utils.daemon import Daemon
 
 
@@ -35,7 +35,7 @@ def red(text):
 class BotDaemon(Daemon):
     def run(self):
         from web.webapp import app
-        aiohttp.web.run_app(app)
+        aiohttp.web.run_app(app, port=config['port'])
 
 
 class ProcessOwner:
@@ -100,8 +100,7 @@ class ProcessOwner:
 
 class BotService(ProcessOwner):
     def __init__(self):
-        config = importlib.import_module('config')
-        self.config = config.config
+        self.config = config
 
         dealer_module = importlib.import_module('bot.dealer')
         dealer_pidfile = join(self.config['project_dir'], 'dealer.pid')

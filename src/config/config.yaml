@@ -2,8 +2,7 @@ debug: true
 project_name: evernoterobot
 secret_key: secret_key
 
-gunicorn:
-    port: 9000
+port: 9000
 
 storage:
     class: bot.storage.MemoryStorage
