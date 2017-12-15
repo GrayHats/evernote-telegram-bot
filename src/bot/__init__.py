@@ -177,7 +177,7 @@ read and update your notes'
                               message=message.raw)
 
     async def handle_request(self, user: User, request_type: str, message: Message):
-        handler = self.handlers[request_type]
+        handler = self.handlers[request_type][0]
         reply = await self.async_send_message(user.telegram_chat_id, '🔄 Accepted')
         await handler.execute(
             user,
