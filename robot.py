@@ -18,6 +18,7 @@ sys.path.append(join(realpath(dirname(__file__)), 'src'))
 
 from config import config
 from utils.daemon import Daemon
+from ext.telegram.api import BotApi
 from bot.dealer import EvernoteDealerDaemon
 
 
@@ -40,66 +41,48 @@ class BotDaemon(Daemon):
 
 
 class BotService:
-    def __init__(self):
+    def __init__(self, config):
         self.config = config
+        self.dealer_daemon = self.create_daemon('dealer', EvernoteDealerDaemon)
+        self.bot_daemon = self.create_daemon('bot', BotDaemon)
 
+    def create_daemon(self, name, class_object):
         project_dir = self.config['project_dir']
-        dealer_pidfile = join(project_dir, 'dealer.pid')
-        dealer_stdout = join(project_dir, 'dealer.stdout.log')
-        self.dealer_daemon = EvernoteDealerDaemon(dealer_pidfile, dealer_stdout)
-
-        bot_pidfile = join(project_dir, 'bot.pid')
-        bot_stdout = join(project_dir, 'bot.stdout.log')
-        self.bot_daemon = BotDaemon(bot_pidfile, bot_stdout)
+        pidfile = join(project_dir, '{}.pid'.format(name))
+        stdout_filename = join(project_dir, '{}.stdout.log'.format(name))
+        return class_object(pidfile, stdout_filename)
 
     def start(self):
         os.makedirs(self.config['logs_dir'], mode=0o700, exist_ok=True)
         os.makedirs(self.config['downloads_dir'], mode=0o700, exist_ok=True)
-        self.daemon_start(self.dealer_daemon)
-        self.daemon_start(self.bot_daemon)
-
-    def daemon_start(self, daemon):
-        print('Starting {}...'.format(basename(daemon.pidfile)))
-        try:
-            daemon.start()
-            print(green('OK'))
-        except Exception as e:
-            print(red('FAILED'))
-            raise e
+        self.dealer_daemon.start()
+        self.bot_daemon.start()
+        print(green('OK\n'))
 
     def stop(self):
-        self.daemon_stop(self.dealer_daemon)
-        self.daemon_stop(self.bot_daemon)
-
-    def daemon_stop(self, daemon):
-        print('Stopping {}...'.format(basename(daemon.pidfile)), end='')
-        try:
-            daemon.stop()
-            print(green('OK'))
-        except Exception as e:
-            print(red('FAILED'))
-            raise e
+        self.dealer_daemon.stop()
+        self.bot_daemon.stop()
+        print(green('OK\n'))
 
     def restart(self):
         self.stop()
         self.start()
 
     def set_webhook(self):
-        from ext.telegram.api import BotApi
-        telegram_api = BotApi(self.config['telegram']['token'])
+        telegram_config = self.config['telegram']
+        api = BotApi(telegram_config['token'])
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(
-            telegram_api.setWebhook(self.config['telegram']['webhook_url'])
-        )
+        url = telegram_config['webhook_url']
+        loop.run_until_complete(api.setWebhook(url))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('CMD', help="Command (start/stop/restart)\n")
+    parser.add_argument('CMD', help='Command (start/stop/restart)\n')
     args = parser.parse_args()
     cmd = args.CMD
     try:
-        service = BotService()
+        service = BotService(config)
         if cmd == 'start':
             service.start()
         elif cmd == 'stop':
@@ -109,10 +92,8 @@ if __name__ == '__main__':
         elif cmd == 'set_webhook':
             service.set_webhook()
         else:
-            print("Unknown command '{}'\n".format(cmd))
+            print('Unknown command "{}"\n'.format(cmd))
             sys.exit(1)
     except Exception as e:
         print(red(e))
         sys.exit(1)
-
-    print("Done.\n")
