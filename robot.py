@@ -55,8 +55,8 @@ class BotService:
     def start(self):
         os.makedirs(self.config['logs_dir'], mode=0o700, exist_ok=True)
         os.makedirs(self.config['downloads_dir'], mode=0o700, exist_ok=True)
-        self.daemon_start(self.dealer_daemon.start())
-        self.daemon_start(self.bot_daemon.start())
+        self.daemon_start(self.dealer_daemon)
+        self.daemon_start(self.bot_daemon)
 
     def daemon_start(self, daemon):
         print('Starting {}...'.format(basename(daemon.pidfile)))
