@@ -169,13 +169,6 @@ read and update your notes'
         )
         session.save()
 
-    async def accept_request(self, user: User, request_type: str, message: Message):
-        reply = await self.async_send_message(user.telegram_chat_id, '🔄 Accepted')
-        TelegramUpdate.create(user_id=user.id,
-                              request_type=request_type,
-                              status_message_id=reply['message_id'],
-                              message=message.raw)
-
     async def handle_request(self, user: User, request_type: str, message: Message):
         handler = self.handlers[request_type][0]
         reply = await self.async_send_message(user.telegram_chat_id, '🔄 Accepted')
@@ -185,7 +178,6 @@ read and update your notes'
             request_type=request_type,
             message=message
         )
-
 
     async def handle_callback_query(self, query: CallbackQuery):
         data = json.loads(query.data)
