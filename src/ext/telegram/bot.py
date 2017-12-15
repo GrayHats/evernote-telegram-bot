@@ -50,9 +50,9 @@ class TelegramBot:
 
     async def handle_message(self, message: Message):
         await self.on_message_received(message)
-
-        if message.text and message.text.startswith('/') and message.bot_commands:
-            cmd = message.text.replace('/', '').strip()
+        text = message.text
+        if text and text.startswith('/') and message.bot_commands:
+            cmd = text.replace('/', '').strip()
             if cmd in self.commands:
                 await self.execute_command(cmd, message)
         elif hasattr(message, 'photos') and message.photos:
@@ -65,10 +65,8 @@ class TelegramBot:
             await self.on_voice(message)
         elif hasattr(message, 'location') and message.location:
             await self.on_location(message)
-        else:
-            text = message.text
-            if text:
-                await self.on_text(message)
+        elif text:
+            await self.on_text(message)
 
         await self.on_message_processed(message)
 

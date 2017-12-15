@@ -45,38 +45,45 @@ class BaseHandler:
         self.evernote = Evernote(title_prefix='[TELEGRAM BOT]')
         self.telegram = BotApi(config['telegram']['token'])
 
-    async def execute(self, user: User, update: TelegramUpdate):
+    async def execute(self, user: User, **kwargs):
+        chat_id = user.telegram_chat_id
+        status_message_id = kwargs['status_message_id']
+        request_type = kwargs['request_type']
+        message = kwargs['message']
         try:
             start_ts = time.time()
             if user.mode == 'one_note':
-                await self._update_note(user, update)
+                await self._update_note(user, request_type, message)
             elif user.mode == 'multiple_notes':
-                await self._create_note(user, update)
+                await self._create_note(user, request_type, message)
             else:
-                raise Exception('Invalid user mode {0}'.format(user.mode))
+                self.logger.warn('User {0} has invalid mode {1}'.format(user.id, user.mode))
+                user.mode = 'multiple_notes'
+                user.save()
+                await self._create_note(user, request_type, message)
             text = '✅ {0} saved ({1:.2} s)'.format(
-                update.request_type.capitalize(),
+                request_type.capitalize(),
                 time.time() - start_ts
             )
-            self.update_status_message(user, update, text)
         except TokenExpired:
-            text = '⛔️ Evernote access token is expired. \
-Send /start to get new token'
-            self.update_status_message(user, update, text)
+            text = '⛔️ Evernote access token is expired. Send /start to get new token'
         except Exception as e:
             self.logger.error(e, exc_info=1)
-            FailedUpdate.create(error=traceback.format_exc(),
-                                **update.save_data())
+            FailedUpdate.create(
+                user_id=user.id,
+                request_type=request_type,
+                status_message_id=status_message_id,
+                message=message.raw,
+                error=traceback.format_exc()
+            )
             error_text = e.message if hasattr(e, 'message') else 'Something went wrong'
             text = '❌ {error}. Please, try again'.format(error=error_text)
-            self.update_status_message(user, update, text)
+        await self.telegram.editMessageText(chat_id, status_message_id, text or '✅ Done')
 
-    def update_status_message(self, user, update, text):
-        return asyncio.ensure_future(
-            self.telegram.editMessageText(
-                user.telegram_chat_id, update.status_message_id, text
-            )
-        )
+    # def set_message_text(self, chat_id, message_id, text):
+    #     return asyncio.ensure_future(
+    #         self.telegram.editMessageText(chat_id, message_id, text)
+    #     )
 
     async def get_files(self, message: Message):
         return []
@@ -84,9 +91,8 @@ Send /start to get new token'
     async def get_text(self, message: Message):
         return message.text or message.caption or ''
 
-    async def _create_note(self, user: User, update: TelegramUpdate):
-        message = Message(update.message)
-        title = update.request_type.capitalize()
+    async def _create_note(self, user: User, request_type: str, message: Message):
+        title = request_type.capitalize()
         text = await self.get_text(message)
         files = await self.get_files(message)
         await self.evernote.create_note(
@@ -97,7 +103,7 @@ Send /start to get new token'
             files
         )
 
-    async def _update_note(self, user: User, update: TelegramUpdate):
+    async def _update_note(self, user: User, request_type: str, message: Message):
         notebook_guid = user.current_notebook['guid']
         note_guid = user.places.get(notebook_guid)
         if not note_guid:
@@ -106,7 +112,6 @@ Send /start to get new token'
             )
             raise Exception(error)
 
-        message = Message(update.message)
         text = await self.get_text(message)
         files = await self.get_files(message)
         await self.evernote.update_note(
@@ -115,7 +120,7 @@ Send /start to get new token'
             notebook_guid,
             text,
             files,
-            request_type=update.request_type
+            request_type=request_type
         )
 
     async def cleanup(self, user: User, update: TelegramUpdate):

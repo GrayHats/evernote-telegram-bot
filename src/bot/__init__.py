@@ -8,6 +8,12 @@ from config import config
 from bot.model import User
 from bot.model import TelegramUpdate
 from bot.model import StartSession
+from bot.message_handlers import TextHandler
+from bot.message_handlers import PhotoHandler
+from bot.message_handlers import VideoHandler
+from bot.message_handlers import DocumentHandler
+from bot.message_handlers import VoiceHandler
+from bot.message_handlers import LocationHandler
 from ext.evernote.client import Evernote
 from ext.telegram.bot import TelegramBot
 from ext.telegram.bot import TelegramBotError
@@ -31,6 +37,14 @@ class EvernoteBot(TelegramBot):
         self.evernote = Evernote(title_prefix='[TELEGRAM BOT]')
         for cmd_class in get_commands():
             self.add_command(cmd_class)
+        self.handlers = {
+            'text': [TextHandler()],
+            'photo': [PhotoHandler()],
+            'video': [VideoHandler()],
+            'document': [DocumentHandler()],
+            'voice': [VoiceHandler()],
+            'location': [LocationHandler()],
+        }
 
     async def set_current_notebook(self, user, notebook_name=None,
                                    notebook_guid=None):
@@ -162,6 +176,12 @@ read and update your notes'
                               status_message_id=reply['message_id'],
                               message=message.raw)
 
+    async def handle_request(self, user: User, request_type: str, message: Message):
+        handler = self.handlers[request_type]
+        reply = await self.async_send_message(user.telegram_chat_id, '🔄 Accepted')
+        await handler.execute(user, reply['message_id'], request_type, message)
+
+
     async def handle_callback_query(self, query: CallbackQuery):
         data = json.loads(query.data)
         if data['cmd'] == 'set_nb':
@@ -199,37 +219,34 @@ read and update your notes'
     async def on_text(self, message: Message):
         user = User.get({'id': message.user.id})
         text = message.text
-        if user.state == 'select_notebook':
+        if user.state:
             if text.startswith('> ') and text.endswith(' <'):
                 text = text[2:-2]
-            await self.set_current_notebook(user, text)
-            user.state = None
-            user.save()
-        elif user.state == 'switch_mode':
-            if text.startswith('> ') and text.endswith(' <'):
-                text = text[2:-2]
-            await self.set_mode(user, text)
+            if user.state == 'select_notebook':
+                await self.set_current_notebook(user, text)
+            elif user.state == 'switch_mode':
+                await self.set_mode(user, text)
             user.state = None
             user.save()
         else:
-            await self.accept_request(user, 'text', message)
+            await self.handle_request(user, 'text', message)
 
     async def on_photo(self, message: Message):
         user = User.get({'id': message.user.id})
-        await self.accept_request(user, 'photo', message)
+        await self.handle_request(user, 'photo', message)
 
     async def on_video(self, message: Message):
         user = User.get({'id': message.user.id})
-        await self.accept_request(user, 'video', message)
+        await self.handle_request(user, 'video', message)
 
     async def on_document(self, message: Message):
         user = User.get({'id': message.user.id})
-        await self.accept_request(user, 'document', message)
+        await self.handle_request(user, 'document', message)
 
     async def on_voice(self, message: Message):
         user = User.get({'id': message.user.id})
-        await self.accept_request(user, 'voice', message)
+        await self.handle_request(user, 'voice', message)
 
     async def on_location(self, message: Message):
         user = User.get({'id': message.user.id})
-        await self.accept_request(user, 'location', message)
+        await self.handle_request(user, 'location', message)
