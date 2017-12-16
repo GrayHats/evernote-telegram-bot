@@ -38,12 +38,12 @@ class EvernoteBot(TelegramBot):
         for cmd_class in get_commands():
             self.add_command(cmd_class)
         self.handlers = {
-            'text': [TextHandler()],
-            'photo': [PhotoHandler()],
-            'video': [VideoHandler()],
-            'document': [DocumentHandler()],
-            'voice': [VoiceHandler()],
-            'location': [LocationHandler()],
+            'text': TextHandler(),
+            'photo': PhotoHandler(),
+            'video': VideoHandler(),
+            'document': DocumentHandler(),
+            'voice': VoiceHandler(),
+            'location': LocationHandler(),
         }
 
     async def set_current_notebook(self, user, notebook_name=None,
@@ -170,7 +170,7 @@ read and update your notes'
         session.save()
 
     async def handle_request(self, user: User, request_type: str, message: Message):
-        handler = self.handlers[request_type][0]
+        handler = self.handlers[request_type]
         reply = await self.async_send_message(user.telegram_chat_id, '🔄 Accepted')
         await handler.execute(
             user,

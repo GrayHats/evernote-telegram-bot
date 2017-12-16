@@ -78,7 +78,9 @@ class BaseHandler:
             )
             error_text = e.message if hasattr(e, 'message') else 'Something went wrong'
             text = '❌ {error}. Please, try again'.format(error=error_text)
-        await self.telegram.editMessageText(chat_id, status_message_id, text or '✅ Done')
+        asyncio.ensure_future(
+            self.telegram.editMessageText(chat_id, status_message_id, text or '✅ Done')
+        )
 
     async def get_files(self, message: Message):
         return []
