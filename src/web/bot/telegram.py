@@ -1,16 +1,16 @@
+import asyncio
 from aiohttp.web import Response
 
 from bot.model import TelegramUpdateLog
 
 
 async def handle_update(request):
+    data = await request.json()
+    logger = request.app.logger
+    logger.info('[REQUEST] Query string: {0}, Data: {1}'.format(request.path_qs, str(data)))
+    asyncio.ensure_future(request.app.bot.handle_update(data))
     try:
-        data = await request.json()
-        request.app.logger.info(request.path_qs)
-        request.app.logger.info(str(data))
         TelegramUpdateLog.create(update=data, headers=dict(request.headers))
-        await request.app.bot.handle_update(data)
-    except Exception as e:
-        message = 'Exception: {0}, Data: {1}'.format(e, data)
-        request.app.logger.fatal(message, exc_info=1)
+    except Exception:
+        logger.fatal("Can't create update log entry", exc_info=1)
     return Response(body=b'ok')

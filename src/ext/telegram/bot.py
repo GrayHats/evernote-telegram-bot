@@ -8,8 +8,10 @@ from ext.telegram.models import TelegramUpdate, Message, CallbackQuery
 
 
 class TelegramBotError(Exception):
-    def __init__(self, message):
+    def __init__(self, message, reply_markup=None):
         super(TelegramBotError, self).__init__(message)
+        self.message = message
+        self.reply_markup = reply_markup
 
 
 class TelegramBot:

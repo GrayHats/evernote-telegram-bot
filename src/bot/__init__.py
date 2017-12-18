@@ -3,9 +3,10 @@ import importlib
 import json
 
 import asyncio
+import traceback
 
 from config import config
-from bot.model import User
+from bot.model import User, FailedUpdate
 from bot.model import TelegramUpdate
 from bot.model import StartSession
 from bot.message_handlers import TextHandler
@@ -170,16 +171,27 @@ read and update your notes'
         session.save()
 
     async def handle_request(self, user: User, request_type: str, message: Message):
+        chat_id = user.telegram_chat_id
         handler = self.handlers[request_type]
-        reply = await self.async_send_message(user.telegram_chat_id, '🔄 Accepted')
-        asyncio.ensure_future(
-            handler.execute(
+        reply = await self.async_send_message(chat_id, '🔄 Accepted')
+        status_message_id = reply['message_id']
+        try:
+            await handler.execute(
                 user,
-                status_message_id=reply['message_id'],
+                status_message_id=status_message_id,
                 request_type=request_type,
                 message=message
             )
-        )
+        except TelegramBotError as e:
+            FailedUpdate.create(
+                user_id=user.id,
+                request_type=request_type,
+                status_message_id=status_message_id,
+                message=message.raw,
+                error=traceback.format_exc()
+            )
+            await self.api.editMessageText(chat_id, status_message_id, e.message, e.reply_markup)
+            raise e
 
     async def handle_callback_query(self, query: CallbackQuery):
         data = json.loads(query.data)

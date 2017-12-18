@@ -1,9 +1,9 @@
-import asyncio
 import os
 import traceback
 import time
 
 from config import config
+from ext.telegram.bot import TelegramBotError
 from utils.logs import get_logger
 from utils.downloader import HttpDownloader
 from bot.model import TelegramUpdate
@@ -55,20 +55,12 @@ class BaseHandler:
             await self.save_to_evernote(user, request_type, message)
             duration = time.time() - start_ts
             text = '✅ {0} saved ({1:.2} s)'.format(request_type.capitalize(), duration)
+            await self.telegram.editMessageText(chat_id, status_message_id, text)
         except TokenExpired:
-            text = '⛔️ Evernote access token is expired. Send /start to get new token'
+            raise TelegramBotError('⛔️ Evernote access token is expired. Send /start to get new token')
         except Exception as e:
-            self.logger.error(e, exc_info=1)
-            FailedUpdate.create(
-                user_id=user.id,
-                request_type=request_type,
-                status_message_id=status_message_id,
-                message=message.raw,
-                error=traceback.format_exc()
-            )
             error_text = e.message if hasattr(e, 'message') else 'Something went wrong'
-            text = '❌ {error}. Please, try again'.format(error=error_text)
-        await self.telegram.editMessageText(chat_id, status_message_id, text or '✅ Done')
+            raise TelegramBotError('❌ {}. Please, try again'.format(error_text))
 
     async def get_files(self, message: Message):
         return []
