@@ -172,11 +172,13 @@ read and update your notes'
     async def handle_request(self, user: User, request_type: str, message: Message):
         handler = self.handlers[request_type]
         reply = await self.async_send_message(user.telegram_chat_id, '🔄 Accepted')
-        await handler.execute(
-            user,
-            status_message_id=reply['message_id'],
-            request_type=request_type,
-            message=message
+        asyncio.ensure_future(
+            handler.execute(
+                user,
+                status_message_id=reply['message_id'],
+                request_type=request_type,
+                message=message
+            )
         )
 
     async def handle_callback_query(self, query: CallbackQuery):

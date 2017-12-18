@@ -50,21 +50,11 @@ class BaseHandler:
         status_message_id = kwargs['status_message_id']
         request_type = kwargs['request_type']
         message = kwargs['message']
+        start_ts = time.time()
         try:
-            start_ts = time.time()
-            if user.mode == 'one_note':
-                await self._update_note(user, request_type, message)
-            elif user.mode == 'multiple_notes':
-                await self._create_note(user, request_type, message)
-            else:
-                self.logger.warn('User {0} has invalid mode {1}'.format(user.id, user.mode))
-                user.mode = 'multiple_notes'
-                user.save()
-                await self._create_note(user, request_type, message)
-            text = '✅ {0} saved ({1:.2} s)'.format(
-                request_type.capitalize(),
-                time.time() - start_ts
-            )
+            await self.save_to_evernote(user, request_type, message)
+            duration = time.time() - start_ts
+            text = '✅ {0} saved ({1:.2} s)'.format(request_type.capitalize(), duration)
         except TokenExpired:
             text = '⛔️ Evernote access token is expired. Send /start to get new token'
         except Exception as e:
@@ -78,15 +68,24 @@ class BaseHandler:
             )
             error_text = e.message if hasattr(e, 'message') else 'Something went wrong'
             text = '❌ {error}. Please, try again'.format(error=error_text)
-        asyncio.ensure_future(
-            self.telegram.editMessageText(chat_id, status_message_id, text or '✅ Done')
-        )
+        await self.telegram.editMessageText(chat_id, status_message_id, text or '✅ Done')
 
     async def get_files(self, message: Message):
         return []
 
     async def get_text(self, message: Message):
         return message.text or message.caption or ''
+
+    async def save_to_evernote(self, user, request_type, message):
+        if user.mode == 'one_note':
+            await self._update_note(user, request_type, message)
+        elif user.mode == 'multiple_notes':
+            await self._create_note(user, request_type, message)
+        else:
+            self.logger.warn('User {0} has invalid mode {1}'.format(user.id, user.mode))
+            user.mode = 'multiple_notes'
+            user.save()
+            await self._create_note(user, request_type, message)
 
     async def _create_note(self, user: User, request_type: str, message: Message):
         title = request_type.capitalize()
